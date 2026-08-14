@@ -26,11 +26,11 @@
 
 | 默认主题 · 浅色 | 默认主题 · 深色 |
 |---|---|
-| ![默认浅色](docs/screenshots/default-light.png) | ![默认深色](docs/screenshots/default-dark.png) |
+| ![默认浅色](docs/screenshots/default-light.webp) | ![默认深色](docs/screenshots/default-dark.webp) |
 
 | 皮肤 mod（深海女仆工坊 maid-atelier）· 浅色 |
 |---|
-| ![皮肤浅色](docs/screenshots/maid-atelier-light.png) |
+| ![皮肤浅色](docs/screenshots/maid-atelier-light.webp) |
 
 ## 形态与架构
 

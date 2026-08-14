@@ -1,7 +1,7 @@
 {
   "name": "@lanxing/dsh-galgame",
   "description": "GalGame mode for the dsh web GUI: a third conversation view tab (after 轨迹) that renders the real agent session as a visual-novel stage — whale-girl (DeepSeek) portrait with diff switching + draggable thinking bubble, Markdown dialogue box with typewriter + block paging, GalGame-style question/approval choices bound to the portrait, backlog drawer, and a debug mode. Pure presentation layer: never writes the session and never blocks the agent loop.",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "private": false,
   "type": "module",
   "engines": {

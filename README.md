@@ -20,6 +20,18 @@
 | 设置面板 | 自动翻句 / 打字机速度 / 说话弹跳 / 思考气泡 / 调试模式（各图层彩色边框） |
 | 立绘位移 | 提问/审批弹出时立绘自动右移给选项让位，恢复后回到居中 |
 
+## 界面预览
+
+配色主题化：跟随 DSH 当前主题/皮肤（默认浅色、默认深色、皮肤 mod 均自动适配）。
+
+| 默认主题 · 浅色 | 默认主题 · 深色 |
+|---|---|
+| ![默认浅色](docs/screenshots/default-light.png) | ![默认深色](docs/screenshots/default-dark.png) |
+
+| 皮肤 mod（深海女仆工坊 maid-atelier）· 浅色 |
+|---|
+| ![皮肤浅色](docs/screenshots/maid-atelier-light.png) |
+
 ## 形态与架构
 
 - 形态：`树外 npm 包`（`@lanxing/dsh-galgame`，link 安装到 web profile）

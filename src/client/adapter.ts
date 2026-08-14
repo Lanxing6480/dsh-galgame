@@ -117,7 +117,7 @@ function lineFromNode(node: ConversationNode): ScriptLine | null {
       key: `user-${node.seq}`,
       seq: node.seq,
       speaker: 'user',
-      name: '你',
+      name: '我',
       text,
       portrait: 'neutral',
       time: node.time ?? 0,

@@ -99,17 +99,54 @@ export function GalgameView({ sessionId, useSession, useInput, inputActions, sen
   const lineKey = streaming !== null ? streaming.key : (line?.key ?? null)
 
   // 行切换：streaming → 定稿（同源文本）不重置句位置；否则重置到 0。
+  // （bug 修复：lastStreamingRef 必须实时跟随流式文本，否则结束后误判
+  //   「不同源」强制翻回第一句。）
   const lastStreamingRef = useRef<string | null>(null)
   useEffect(() => {
-    if (streaming !== null) {
-      lastStreamingRef.current = streaming.text
-      return
-    }
+    if (streaming !== null) lastStreamingRef.current = streaming.text
+  }, [streaming])
+  useEffect(() => {
+    if (streaming !== null) return
     const sameSource = line !== null && lastStreamingRef.current !== null && line.text === lastStreamingRef.current
     lastStreamingRef.current = null
     if (!sameSource) setUnitIdx(0)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [lineKey, streaming !== null])
+  }, [lineKey])
+
+  // 播放位置持久化（bug 修复：切换视图/重挂后停在上次翻到的地方）。
+  const PLAYBACK_KEY = 'dsh.galgame.playback'
+  const restoredRef = useRef(false)
+  useEffect(() => {
+    if (restoredRef.current || settledLines.length === 0) return
+    restoredRef.current = true
+    try {
+      const raw = localStorage.getItem(PLAYBACK_KEY)
+      if (raw === null) return
+      const saved = JSON.parse(raw) as { lineKey?: string; unitIdx?: number }
+      if (saved && typeof saved.lineKey === 'string' && typeof saved.unitIdx === 'number') {
+        const index = settledLines.findIndex((item) => item.key === saved.lineKey)
+        if (index >= 0) {
+          setLineIdx(index)
+          setUnitIdx(saved.unitIdx)
+        }
+      }
+    } catch {
+      // 忽略损坏的持久化
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [settledLines])
+  useEffect(() => {
+    if (streaming !== null || lineKey === null) return
+    try {
+      localStorage.setItem(PLAYBACK_KEY, JSON.stringify({ lineKey, unitIdx }))
+    } catch {
+      // 忽略持久化失败
+    }
+  }, [lineKey, unitIdx, streaming])
+
+  // 提问 / 审批等待（供自动推进暂停判断，需在 effect 前定义）。
+  const questionWait = pending.find((item: { kind: string }) => item.kind === 'question')
+  const approvalWait = pending.find((item: { kind: string }) => item.kind === 'approval')
 
   // 自动模式：模型运行中且开启配置时默认自动（需求 10）；流式期间持续 auto。
   // 用户行（自己说的话）不参与自动推进。
@@ -131,31 +168,36 @@ export function GalgameView({ sessionId, useSession, useInput, inputActions, sen
   }, [running, streaming !== null, lineIdx, settledLines.length, settings.autoMode, isAssistantLine])
 
   // 流式推进：句子按节奏自动前进（用户点击后 manual 暂停）。
+  // 选择框（question/approval）弹出时暂停自动翻页，让用户自己点击切换（优化）。
   useEffect(() => {
     if (streaming === null || mode !== 'auto') return
+    if (questionWait !== undefined || approvalWait !== undefined) return
     if (unitIdx >= sentences.length - 1) return
     const timer = setTimeout(() => {
       setUnitIdx((index) => Math.min(index + 1, sentences.length - 1))
     }, STREAM_ADVANCE_MS)
     return () => clearTimeout(timer)
-  }, [streaming, mode, unitIdx, sentences.length])
+  }, [streaming, mode, unitIdx, sentences.length, questionWait, approvalWait])
 
-  // 定稿行自动推进（仅 assistant 行）。
+  // 定稿行自动推进（仅 assistant 行）；选择框弹出时同样暂停。
   useEffect(() => {
     if (mode !== 'auto' || streaming !== null || !isAssistantLine || sentences.length === 0) return
+    if (questionWait !== undefined || approvalWait !== undefined) return
     if (unitIdx >= sentences.length - 1) return
     const timer = setTimeout(() => {
       setUnitIdx((index) => Math.min(index + 1, sentences.length - 1))
     }, AUTO_ADVANCE_MS)
     return () => clearTimeout(timer)
-  }, [mode, streaming, unitIdx, sentences.length, isAssistantLine])
+  }, [mode, streaming, unitIdx, sentences.length, isAssistantLine, questionWait, approvalWait])
 
-  /** 下一句：流式/自动中点击 = 接管；手动 = 前进一句；行尾则下一行。 */
+  // 选择框弹出时强制回到手动模式（停止自动，用户自己点击切换）。
+  useEffect(() => {
+    if (questionWait !== undefined || approvalWait !== undefined) setMode('manual')
+  }, [questionWait, approvalWait])
+
+  /** 下一段：自动中点击 = 接管并推进一段（流式时「出一个翻一个」）；手动 = 前进；行尾则下一行。 */
   const next = () => {
-    if (mode === 'auto') {
-      setMode('manual')
-      return
-    }
+    if (mode === 'auto') setMode('manual')
     if (sentences.length === 0) return
     if (unitIdx < sentences.length - 1) {
       setUnitIdx((index) => index + 1)
@@ -189,10 +231,6 @@ export function GalgameView({ sessionId, useSession, useInput, inputActions, sen
   useEffect(() => {
     if (instantJump) setInstantJump(false)
   }, [instantJump])
-
-  // 提问 / 审批等待。
-  const questionWait = pending.find((item: { kind: string }) => item.kind === 'question')
-  const approvalWait = pending.find((item: { kind: string }) => item.kind === 'approval')
 
   // 弹跳：配置开关 + 行/句变化触发（每说一句话跳动一次）；用户行不弹。
   const bounceKey = settings.bounce

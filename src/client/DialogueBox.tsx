@@ -102,9 +102,7 @@ export function DialogueBox({ name, isUser, unit, lineKey, autoMode, streaming, 
 
   return (
     <div className={styles.dialogueArea}>
-      <span className={isUser ? styles.namePlateUser : undefined}>
-        <span className={styles.namePlate}>{name}</span>
-      </span>
+      <span className={isUser ? `${styles.namePlate} ${styles.namePlateUser}` : styles.namePlate}>{name}</span>
       <div className={styles.dialogueBox} onClick={handleClick} role="button" tabIndex={0} aria-label="点击继续" data-gg-scroll="">
         {hasText ? (
           <div className={typing ? styles.dialogueTyping : styles.dialogueBody}>

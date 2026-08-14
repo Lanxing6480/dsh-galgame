@@ -1,0 +1,1090 @@
+/**
+ * dsh-galgame — GalGame 舞台样式（Design Tokens 集中管理）。
+ * 背景默认透明（用户可看到自己的主题）；数值为参考文档「06 设计规范起始值」。
+ */
+
+/* ── Tokens ─────────────────────────────────────────────── */
+.root {
+  --gg-surface: rgba(10, 22, 42, 0.72);
+  --gg-surface-strong: rgba(8, 18, 36, 0.92);
+  --gg-text-primary: #f2f6fc;
+  --gg-text-secondary: #b7c6db;
+  --gg-accent: #4f9df0;
+  --gg-accent-deep: #1e4f8e;
+  --gg-border: rgba(255, 255, 255, 0.16);
+  --gg-name-bg: #1e4f8e;
+  --gg-radius: 18px;
+  --gg-font-dialogue: clamp(16px, 1.5vw, 26px);
+  --gg-font-name: clamp(13px, 1.2vw, 20px);
+  --gg-font-ui: clamp(12px, 1vw, 15px);
+  --gg-motion-fade: 140ms;
+  --gg-motion-move: 240ms;
+
+  box-sizing: border-box;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+  color: var(--gg-text-primary);
+  font-family: var(--dsw-font-family, system-ui, 'PingFang SC', 'Microsoft YaHei', sans-serif);
+  /* 透明背景：让用户自己的主题透出来（问题 3 修复） */
+  background: transparent;
+  isolation: isolate;
+}
+
+.root *,
+.root *::before,
+.root *::after {
+  box-sizing: border-box;
+}
+
+/* ── 顶栏 ───────────────────────────────────────────────── */
+.topBar {
+  z-index: 3;
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 16px;
+  border-bottom: 1px solid var(--gg-border);
+  background: linear-gradient(180deg, rgba(8, 20, 40, 0.55), rgba(8, 20, 40, 0.1));
+}
+
+.topTitle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: var(--gg-font-ui);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  color: var(--gg-text-secondary);
+}
+
+.topTitle::before {
+  content: '';
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--gg-accent);
+  box-shadow: 0 0 10px var(--gg-accent);
+}
+
+.topActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.iconButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 30px;
+  padding: 0 12px;
+  border: 1px solid var(--gg-border);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--gg-text-secondary);
+  font-size: var(--gg-font-ui);
+  cursor: pointer;
+  transition: background var(--gg-motion-fade) ease, color var(--gg-motion-fade) ease;
+}
+
+.iconButton:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.14);
+  color: var(--gg-text-primary);
+}
+
+.iconButton:focus-visible {
+  outline: 2px solid var(--gg-accent);
+  outline-offset: 2px;
+}
+
+/* ── 舞台（立绘层） ─────────────────────────────────────── */
+.stage {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  cursor: pointer; /* 问题 3：全屏点击推进 */
+  /* 修：整个舞台禁止文本选择/光标插入（点击立绘不再出现 I-beam 光标） */
+  user-select: none;
+  -webkit-user-select: none;
+  caret-color: transparent;
+}
+
+.stage * {
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* 底部浮层：对话框 + 输入条盖在立绘上，不挤压立绘（问题 2） */
+.stageOverlay {
+  position: absolute;
+  left: 50%;
+  bottom: 14px;
+  transform: translateX(-50%);
+  width: min(88%, 1180px);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  z-index: 3;
+}
+
+.stageWatermark {
+  position: absolute;
+  right: 26px;
+  bottom: 20px;
+  color: rgba(160, 200, 245, 0.28);
+  font-size: var(--gg-font-ui);
+  letter-spacing: 0.12em;
+  pointer-events: none;
+  user-select: none;
+}
+
+/* 立绘位移层（问题 1）：正常居中，选项等待时右移给左侧让位 */
+.portraitShift,
+.portraitShifted {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  transition: transform 320ms ease;
+}
+
+.portraitShift {
+  transform: translateX(0);
+}
+
+.portraitShifted {
+  transform: translateX(16%);
+}
+
+/* 立绘：bottom-center 锚点，高度撑满舞台，宽自适应 */
+.portraitWrap {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  height: 100%;
+  display: flex;
+  align-items: flex-end;
+  pointer-events: none;
+}
+
+.portrait {
+  height: 96%;
+  max-width: 78vw;
+  object-fit: contain;
+  object-position: bottom center;
+  filter: drop-shadow(0 10px 28px rgba(0, 0, 0, 0.35));
+  animation: ggPortraitFade var(--gg-motion-fade) ease-out both;
+  transform-origin: 50% 100%;
+  /* bug 修复 2：立绘不可选中、不可拖拽、点击穿透（翻页由容器处理） */
+  user-select: none;
+  -webkit-user-drag: none;
+  pointer-events: none;
+}
+
+/* 差分切换淡入 */
+@keyframes ggPortraitFade {
+  from { opacity: 0; transform: translateY(6px) scale(0.995); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* 说话弹跳（需求 8/优化 2）：弹两下；作用于 wrapper 层，img 不重挂（不闪烁）。
+ * 关键：keyframes 必须保留 translateX(-50%) —— portraitWrap 靠它水平居中，
+ * 动画填充（both）会接管 transform，漏掉它会导致弹跳后立绘永久偏右。 */
+@keyframes ggBounce {
+  0% { transform: translateX(-50%) translateY(0); }
+  28% { transform: translateX(-50%) translateY(-16px); }
+  52% { transform: translateX(-50%) translateY(0); }
+  74% { transform: translateX(-50%) translateY(-9px); }
+  100% { transform: translateX(-50%) translateY(0); }
+}
+
+.bouncing {
+  animation: ggBounce 520ms ease-in-out both;
+  transform-origin: 50% 100%;
+}
+
+/* 思考徽标（流式输出中） */
+.thinkingBadge {
+  position: absolute;
+  top: 18px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px;
+  border: 1px solid var(--gg-border);
+  border-radius: 999px;
+  background: rgba(10, 26, 52, 0.72);
+  color: var(--gg-text-secondary);
+  font-size: var(--gg-font-ui);
+  z-index: 2;
+}
+
+.thinkingDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--gg-accent);
+  animation: ggThinkingDot 1.2s ease-in-out infinite;
+}
+
+.thinkingDot:nth-child(2) { animation-delay: 0.2s; }
+.thinkingDot:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes ggThinkingDot {
+  0%, 100% { opacity: 0.25; transform: translateY(0); }  50% { opacity: 1; transform: translateY(-3px); }
+}
+
+/* ── 思考气泡（显示思维链） ───────────────────────────────
+ * 漫画风不规则气泡：不对称圆角 + 高光 + 尾巴；
+ * 以立绘为原点偏移（right: 100% 贴立绘左侧，跟随立绘位置与弹跳）；
+ * 内容滚动显示（流式滚动效果），超出部分滚动而非硬裁。 */
+.thinkingBubble {
+  position: absolute;
+  right: calc(100% + 14px); /* 立绘左侧：以立绘图片为原点偏移 */
+  top: 24%;
+  z-index: 2;
+  width: 264px;
+  max-width: 30vw;
+  padding: 14px 16px 12px;
+  border: 1px solid rgba(140, 190, 240, 0.32);
+  border-radius: 26px 26px 26px 8px; /* 漫画不对称圆角 */
+  background: rgba(16, 34, 62, 0.82);
+  backdrop-filter: blur(8px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.38);
+  color: var(--gg-text-secondary);
+  animation: ggBubbleIn 220ms ease-out both;
+  /* 可拖拽（问题 1）：气泡需要命中指针事件；点击不翻页（组件内 stopPropagation） */
+  pointer-events: auto;
+  cursor: grab;
+  touch-action: none;
+}
+
+/* 高光小椭圆（漫画气泡质感） */
+.thinkingBubble::before {
+  content: '';
+  position: absolute;
+  left: 12px;
+  top: 9px;
+  width: 26px;
+  height: 11px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.16);
+  transform: rotate(-10deg);
+}
+
+/* 尾巴（漫画感）：指向立绘的三角 */
+.thinkingBubble::after {
+  content: '';
+  position: absolute;
+  right: -11px;
+  top: 28px;
+  border: 11px solid transparent;
+  border-left-color: rgba(16, 34, 62, 0.82);
+}
+
+.thinkingBubbleTitle {
+  margin-bottom: 5px;
+  color: var(--gg-accent);
+  font-size: var(--gg-font-ui);
+  font-weight: 600;
+  letter-spacing: 0.05em;
+}
+
+.thinkingBubbleText {
+  max-height: 170px;
+  overflow-y: auto; /* 流式滚动效果：内容增长时由上层自动滚到底 */
+  scrollbar-width: thin;
+  scrollbar-color: rgba(140, 190, 240, 0.35) transparent;
+  font-size: var(--gg-font-ui);
+  line-height: 1.6;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+@keyframes ggBubbleIn {
+  from { opacity: 0; transform: translateY(8px) scale(0.97); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* ── 对话框（DialogueLayer） ────────────────────────────── */
+.dialogueArea {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+}
+
+.namePlate {
+  align-self: flex-start;
+  min-width: 96px;
+  padding: 5px 16px 6px;
+  border-radius: 10px 10px 10px 4px;
+  background: var(--gg-name-bg);
+  color: #eaf2fc;
+  font-size: var(--gg-font-name);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
+}
+
+.namePlateUser {
+  background: #3a5478;
+}
+
+/* 半透明自适应长度（问题 2）：min 小，随内容增长；最高 40vh 内滚动（问题 4） */
+.dialogueBox {
+  position: relative;
+  min-height: 64px;
+  max-height: 40vh;
+  padding: 16px 18px 34px;
+  border: 1px solid var(--gg-border);
+  border-radius: var(--gg-radius);
+  background: var(--gg-surface);
+  box-shadow: 0 12px 34px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(10px);
+  cursor: pointer;
+  user-select: none;
+  overflow-y: auto;
+  --dsh-scrollbar-thumb: var(--dsw-alias-scrollbar-bg-l2, rgba(255,255,255,0.2));
+}
+
+/* 打字机阶段：Markdown 已渲染，仅保留光标指示 */
+.dialogueTyping {
+  position: relative;
+  min-height: 1.4em;
+}
+
+.dialogueTyping::after {
+  content: '▍';
+  color: var(--gg-accent);
+  animation: ggCaret 0.9s steps(1) infinite;
+  margin-left: 1px;
+}
+
+@keyframes ggCaret {
+  0%, 60% { opacity: 1; }
+  61%, 100% { opacity: 0; }
+}
+
+/* MD 内容容器：句打满后完整渲染 */
+.dialogueBody {
+  animation: ggUnitIn 200ms ease-out both;
+}
+
+.dialogueBody :global(p) {
+  margin: 0 0 0.5em;
+}
+
+.dialogueBody :global(p:last-child) {
+  margin-bottom: 0;
+}
+
+.dialogueBody :global(ul),
+.dialogueBody :global(ol) {
+  margin: 0.3em 0;
+  padding-left: 1.6em;
+}
+
+.dialogueBody :global(li) {
+  margin: 0.15em 0;
+}
+
+.dialogueBody :global(pre) {
+  margin: 0.4em 0;
+  border-radius: 10px;
+}
+
+.dialogueBody :global(code) {
+  font-size: 0.92em;
+}
+
+@keyframes ggUnitIn {
+  from { opacity: 0; transform: translateY(5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.dialoguePlaceholder {
+  color: var(--gg-text-secondary);
+}
+
+.dialogueControls {
+  position: absolute;
+  right: 12px;
+  bottom: 6px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pageButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border: 1px solid var(--gg-border);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--gg-text-secondary);
+  font-size: 11px;
+  cursor: pointer;
+  transition: background var(--gg-motion-fade) ease, color var(--gg-motion-fade) ease;
+}
+
+.pageButton:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.14);
+  color: var(--gg-text-primary);
+}
+
+.pageButton:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.pageProgress {
+  color: var(--gg-text-secondary);
+  font-size: var(--gg-font-ui);
+  font-variant-numeric: tabular-nums;
+}
+
+.autoHint {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--gg-accent);
+  font-size: var(--gg-font-ui);
+  letter-spacing: 0.04em;
+}
+
+.autoHint::before {
+  content: '';
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--gg-accent);
+  animation: ggAutoPulse 1s ease-in-out infinite;
+}
+
+@keyframes ggAutoPulse {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 1; }
+}
+
+/* ── 输入条（需求 4 改造：独立于对话框） ─────────────────── */
+.inputArea {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  width: 100%;
+  cursor: default;
+}
+
+.inputBox {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  padding: 8px 8px 8px 14px;
+  border: 1px solid var(--gg-border);
+  border-radius: 16px;
+  background: var(--gg-surface);
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(10px);
+}
+
+.inputField {
+  flex: 1;
+  min-height: 24px;
+  max-height: 120px; /* 问题 1/4：自动扩展但封顶，超出内部滚动 */
+  resize: none;
+  overflow-y: auto;
+  border: none;
+  outline: none;
+  background: transparent;
+  color: var(--gg-text-primary);
+  font-size: var(--gg-font-ui);
+  line-height: 1.5;
+  font-family: inherit;
+}
+
+.inputField::placeholder {
+  color: var(--gg-text-secondary);
+}
+
+.inputSend {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  flex: none;
+  border: none;
+  border-radius: 50%;
+  background: var(--gg-accent);
+  color: #051124;
+  font-size: 15px;
+  cursor: pointer;
+  transition: filter var(--gg-motion-fade) ease, transform var(--gg-motion-move) ease;
+}
+
+.inputSend:hover:not(:disabled) {
+  filter: brightness(1.12);
+  transform: translateY(-1px);
+}
+
+.inputSend:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.inputHint {
+  color: var(--gg-text-secondary);
+  font-size: var(--gg-font-ui);
+  text-align: right;
+  opacity: 0.85;
+}
+
+/* ── 空态 ───────────────────────────────────────────────── */
+.emptyState {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  color: var(--gg-text-secondary);
+  text-align: center;
+  padding: 24px;
+  pointer-events: none;
+}
+
+.emptyStateTitle {
+  font-size: clamp(18px, 2vw, 26px);
+  font-weight: 600;
+  color: var(--gg-text-primary);
+}
+
+.emptyStateBody {
+  max-width: 460px;
+  font-size: var(--gg-font-ui);
+  line-height: 1.7;
+}
+
+/* ── 提问 / 审批选择窗口（ChoiceLayer / ApprovalLayer） ───
+ * 以立绘为原点绑定：渲染在 Stage 的浮层插槽（portraitWrap 内），
+ * 默认贴立绘左侧（立绘移位时跟随）；支持拖拽 + 位置持久化。 */
+.choiceHost {
+  position: absolute;
+  right: calc(100% + 16px); /* 立绘左侧：以立绘图片为原点偏移 */
+  top: 24%;
+  z-index: 4;
+  width: min(620px, 60vw);
+  animation: ggCardIn 220ms ease-out both;
+  /* 可拖拽调整位置；点击不冒泡翻页（组件内 stopPropagation） */
+  pointer-events: auto;
+  cursor: grab;
+  touch-action: none;
+}
+
+@keyframes ggFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.choiceCard {
+  width: 100%;
+  max-height: 60vh;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--gg-border);
+  border-radius: 20px;
+  background: var(--gg-surface-strong);
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.55);
+  overflow: hidden;
+  animation: ggCardIn 220ms ease-out both;
+}
+
+/* ── 审批卡片（bug 修复 1） ─────────────────────────────── */
+.approvalCard {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--gg-border);
+  border-radius: 20px;
+  background: var(--gg-surface-strong);
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.55);
+  overflow: hidden;
+  animation: ggCardIn 220ms ease-out both;
+}
+
+.approvalStrip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 18px;
+  background: rgba(255, 170, 80, 0.14);
+  color: #ffc98a;
+  font-size: var(--gg-font-ui);
+  letter-spacing: 0.04em;
+}
+
+.approvalDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #ffb057;
+  box-shadow: 0 0 8px #ffb057;
+}
+
+.approvalBody {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 14px 18px 6px;
+}
+
+.approvalHeadline {
+  color: var(--gg-text-primary);
+  font-size: clamp(15px, 1.4vw, 20px);
+  font-weight: 600;
+  line-height: 1.6;
+  word-break: break-word;
+}
+
+.approvalCommand {
+  padding: 8px 12px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--gg-text-secondary);
+  font-family: var(--ds-font-family-code, ui-monospace, monospace);
+  font-size: 0.9em;
+  word-break: break-all;
+}
+
+.approvalActions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 12px 18px 16px;
+}
+
+@keyframes ggCardIn {
+  from { opacity: 0; transform: translateY(16px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.choiceHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px 20px 10px;
+  border-bottom: 1px solid var(--gg-border);
+}
+
+.choiceEyebrow {
+  color: var(--gg-accent);
+  font-size: var(--gg-font-ui);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.choiceTitle {
+  margin: 4px 0 0;
+  color: var(--gg-text-primary);
+  font-size: clamp(16px, 1.6vw, 22px);
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+.choiceBody {
+  padding: 16px 20px;
+  overflow-y: auto;
+}
+
+.choiceDetail {
+  margin: 0 0 14px;
+  color: var(--gg-text-secondary);
+  font-size: var(--gg-font-ui);
+  line-height: 1.7;
+  white-space: pre-wrap;
+}
+
+.choiceOptions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.choiceOption {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 12px 16px;
+  border: 1px solid var(--gg-border);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--gg-text-primary);
+  font-size: var(--gg-font-ui);
+  text-align: left;
+  cursor: pointer;
+  transition: border-color var(--gg-motion-fade) ease, background var(--gg-motion-fade) ease, transform var(--gg-motion-move) ease;
+}
+
+.choiceOption:hover:not(:disabled) {
+  border-color: var(--gg-accent);
+  background: rgba(79, 157, 240, 0.14);
+  transform: translateX(4px);
+}
+
+.choiceOption:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+.choiceOptionLabel {
+  font-weight: 600;
+}
+
+.choiceOptionDesc {
+  color: var(--gg-text-secondary);
+  font-size: 0.92em;
+}
+
+.choiceCustomRow {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.choiceCustomInput {
+  flex: 1;
+  padding: 10px 14px;
+  border: 1px solid var(--gg-border);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--gg-text-primary);
+  font-size: var(--gg-font-ui);
+  outline: none;
+}
+
+.choiceCustomInput:focus {
+  border-color: var(--gg-accent);
+}
+
+.choiceFooter {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 12px 20px 16px;
+  border-top: 1px solid var(--gg-border);
+}
+
+.choiceButton {
+  padding: 8px 18px;
+  border: 1px solid var(--gg-accent);
+  border-radius: 999px;
+  background: var(--gg-accent);
+  color: #051124;
+  font-size: var(--gg-font-ui);
+  font-weight: 600;
+  cursor: pointer;
+  transition: filter var(--gg-motion-fade) ease;
+}
+
+.choiceButton:hover:not(:disabled) { filter: brightness(1.12); }
+.choiceButton:disabled { opacity: 0.5; cursor: default; }
+
+.choiceCancel {
+  padding: 8px 14px;
+  border: 1px solid var(--gg-border);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--gg-text-secondary);
+  font-size: var(--gg-font-ui);
+  cursor: pointer;
+}
+
+.choiceCancel:hover { color: var(--gg-text-primary); }
+
+.choiceError {
+  margin: 0 20px 4px;
+  color: #ff9d9d;
+  font-size: var(--gg-font-ui);
+}
+
+/* ── 历史面板（Backlog，需求 11） ───────────────────────── */
+.backlogMask {
+  position: absolute;
+  inset: 0;
+  z-index: 6;
+  display: flex;
+  justify-content: flex-end;
+  background: rgba(2, 6, 16, 0.5);
+  animation: ggFadeIn 160ms ease-out both;
+}
+
+.backlogPanel {
+  width: min(560px, 92%);
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  border-left: 1px solid var(--gg-border);
+  background: var(--gg-surface-strong);
+  box-shadow: -18px 0 50px rgba(0, 0, 0, 0.5);
+  animation: ggPanelIn 220ms ease-out both;
+}
+
+@keyframes ggPanelIn {
+  from { transform: translateX(40px); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+.backlogHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex: none;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--gg-border);
+}
+
+.backlogTitle {
+  font-size: var(--gg-font-ui);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--gg-text-primary);
+}
+
+.backlogList {
+  flex: 1;
+  min-height: 0;
+  padding: 14px 18px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.backlogRow {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.backlogName {
+  font-size: var(--gg-font-ui);
+  font-weight: 700;
+  color: var(--gg-accent);
+}
+
+.backlogNameUser {
+  color: var(--gg-text-secondary);
+}
+
+.backlogText {
+  color: var(--gg-text-primary);
+  font-size: var(--gg-font-ui);
+  line-height: 1.7;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.backlogStreaming {
+  color: var(--gg-accent);
+}
+
+.backlogEmpty {
+  color: var(--gg-text-secondary);
+  font-size: var(--gg-font-ui);
+  text-align: center;
+  padding: 40px 0;
+}
+
+/* ── 设置面板（问题 3） ─────────────────────────────────── */
+.settingsMask {
+  position: absolute;
+  inset: 0;
+  z-index: 7;
+  display: flex;
+  justify-content: flex-end;
+  background: rgba(2, 6, 16, 0.45);
+  animation: ggFadeIn 160ms ease-out both;
+}
+
+.settingsCard {
+  width: min(420px, 92%);
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  border-left: 1px solid var(--gg-border);
+  background: var(--gg-surface-strong);
+  box-shadow: -18px 0 50px rgba(0, 0, 0, 0.5);
+  animation: ggPanelIn 220ms ease-out both;
+}
+
+.settingsHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex: none;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--gg-border);
+}
+
+.settingsTitle {
+  font-size: var(--gg-font-ui);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--gg-text-primary);
+}
+
+.settingsBody {
+  flex: 1;
+  min-height: 0;
+  padding: 12px 18px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.settingRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 4px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  cursor: pointer;
+}
+
+.settingLabel {
+  color: var(--gg-text-primary);
+  font-size: var(--gg-font-ui);
+}
+
+.settingValue {
+  flex: none;
+  color: var(--gg-text-secondary);
+  font-size: var(--gg-font-ui);
+  min-width: 28px;
+  text-align: right;
+}
+
+.settingSwitchOn,
+.settingSwitchOff {
+  position: relative;
+  flex: none;
+  width: 40px;
+  height: 22px;
+  border: 1px solid var(--gg-border);
+  border-radius: 999px;
+  background: var(--gg-accent-deep);
+  cursor: pointer;
+  transition: background var(--gg-motion-fade) ease;
+}
+
+.settingSwitchOff {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.settingKnob {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #fff;
+  transition: transform var(--gg-motion-move) ease;
+}
+
+.settingSwitchOn .settingKnob {
+  transform: translateX(18px);
+}
+
+.settingRange {
+  flex: 1;
+  min-width: 0;
+  accent-color: var(--gg-accent);
+  cursor: pointer;
+}
+
+/* ── 调试模式（可配置）：各图层/组件不同颜色边框 ─────────── */
+.root[data-gg-debug='true'] .stage {
+  outline: 2px solid #ff5d5d;
+  outline-offset: -2px;
+}
+
+/* 位移层与舞台完全重叠（inset 0），调试时不单独标框以免混淆 */
+.root[data-gg-debug='true'] .portraitWrap {
+  outline: 2px solid #ffe14d;
+}
+
+.root[data-gg-debug='true'] .portrait {
+  outline: 1px dashed #ffd7a1;
+}
+
+.root[data-gg-debug='true'] .thinkingBubble {
+  outline: 2px solid #c77dff;
+}
+
+.root[data-gg-debug='true'] .thinkingBubbleText {
+  outline: 1px dashed #e0b3ff;
+}
+
+.root[data-gg-debug='true'] .topBar {
+  outline: 1px solid #8a9bb8;
+}
+
+.root[data-gg-debug='true'] .stageOverlay {
+  outline: 2px dashed #4dd0ff;
+}
+
+.root[data-gg-debug='true'] .dialogueArea {
+  outline: 1px solid #4dffb8;
+}
+
+.root[data-gg-debug='true'] .dialogueBox {
+  outline: 2px solid #4dff88;
+}
+
+.root[data-gg-debug='true'] .inputArea {
+  outline: 2px solid #4dffd2;
+}
+
+.root[data-gg-debug='true'] .choiceCard,
+.root[data-gg-debug='true'] .approvalCard {
+  outline: 2px solid #ff6bd6;
+}
+
+.root[data-gg-debug='true'] .backlogPanel,
+.root[data-gg-debug='true'] .settingsCard {
+  outline: 2px solid #ff9d5c;
+}
+
+/* ── 减少动效（参考文档 06） ─────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  .root *,
+  .root *::before,
+  .root *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

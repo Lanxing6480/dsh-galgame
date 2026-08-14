@@ -1,0 +1,8 @@
+# dsh-galgame bundle patch: inserts the dual-face plugin row into the
+# web profile roster. The node half (exports ".") serves the character
+# portrait assets over /api/dsh-galgame/assets/*, and the `dsh.client`
+# declaration in package.json loads the browser half (exports "./client")
+# into the web GUI, where it registers the third conversation view tab.
+- insert:
+    - id: galgame
+      name: '@lanxing/dsh-galgame'

@@ -1,0 +1,11 @@
+# 依赖
+node_modules/
+*.tsbuildinfo
+
+# 日志与临时文件
+*.log
+.tmp/
+
+# 构建产物提交入库（便于 link 安装即用，与 dsh-skill-manager 先例一致）
+# 如不希望提交 lib/，取消下面注释
+# lib/

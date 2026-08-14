@@ -1,0 +1,109 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="600" height="900" viewBox="0 0 600 900" role="img" aria-label="鲸鱼娘 立绘（常态）">
+  <defs>
+    <linearGradient id="hair" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#3d7ac2"/>
+      <stop offset="0.55" stop-color="#24579e"/>
+      <stop offset="1" stop-color="#143a73"/>
+    </linearGradient>
+    <linearGradient id="hairFront" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#4f8fd4"/>
+      <stop offset="1" stop-color="#2a5fa8"/>
+    </linearGradient>
+    <linearGradient id="dress" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffffff"/>
+      <stop offset="1" stop-color="#dde8f5"/>
+    </linearGradient>
+    <linearGradient id="apron" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#eaf2fc"/>
+      <stop offset="1" stop-color="#c4d8ef"/>
+    </linearGradient>
+    <radialGradient id="blush" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#ff9d9d" stop-opacity="0.5"/>
+      <stop offset="1" stop-color="#ff9d9d" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <!-- 后发（长发主体，鲸尾形发尾） -->
+  <path d="M300 250 C170 250 128 360 138 520 C144 640 120 720 96 800
+           C118 806 150 800 168 776 C186 748 196 706 200 668
+           C222 742 262 782 300 782 C338 782 378 742 400 668
+           C404 706 414 748 432 776 C450 800 482 806 504 800
+           C480 720 456 640 462 520 C472 360 430 250 300 250 Z"
+        fill="url(#hair)"/>
+
+  <!-- 右侧鲸尾高光 -->
+  <path d="M300 268 C200 272 162 360 168 500 C172 600 152 690 130 770
+           C150 770 172 758 186 736 C198 714 206 686 210 656 Z"
+        fill="#4f8fd4" opacity="0.55"/>
+
+  <!-- 身体（女仆装） -->
+  <path d="M300 428 C258 428 236 452 232 496 L222 620 C220 660 240 686 262 686
+           L268 696 L262 748 C260 772 272 790 300 790 C328 790 340 772 338 748
+           L332 696 L338 686 C360 686 380 660 378 620 L368 496 C364 452 342 428 300 428 Z"
+        fill="url(#dress)" stroke="#b8cbe4" stroke-width="2"/>
+
+  <!-- 围裙 -->
+  <path d="M278 520 L262 686 C262 712 280 730 300 730 C320 730 338 712 338 686
+           L322 520 C320 500 280 500 278 520 Z" fill="url(#apron)"/>
+
+  <!-- 领口（深蓝 V 领 + 白襟） -->
+  <path d="M300 428 C270 428 252 442 244 464 L262 470 C266 454 282 446 300 446
+           C318 446 334 454 338 470 L356 464 C348 442 330 428 300 428 Z"
+        fill="#1e4f8e"/>
+  <path d="M280 452 L292 520 L308 520 L320 452 C316 446 284 446 280 452 Z" fill="#ffffff"/>
+  <path d="M292 520 L300 560 L308 520 Z" fill="#1e4f8e"/>
+
+  <!-- 领口蝴蝶结 -->
+  <path d="M300 522 C276 508 262 518 268 534 C274 550 296 548 300 540
+           C304 548 326 550 332 534 C338 518 324 508 300 522 Z" fill="#1e4f8e"/>
+  <circle cx="300" cy="528" r="7" fill="#16396b"/>
+
+  <!-- 袖口 -->
+  <path d="M232 496 C226 516 230 540 240 560 L250 556 C244 538 242 518 246 500 Z" fill="#ffffff" stroke="#b8cbe4" stroke-width="1.5"/>
+  <path d="M368 496 C374 516 370 540 360 560 L350 556 C356 538 358 518 354 500 Z" fill="#ffffff" stroke="#b8cbe4" stroke-width="1.5"/>
+
+  <!-- 脖子 -->
+  <rect x="286" y="392" width="28" height="44" rx="10" fill="#ffdfc4"/>
+
+  <!-- 头 -->
+  <circle cx="300" cy="318" r="88" fill="#ffe8d6"/>
+  <path d="M300 404 C270 404 252 386 250 356 C272 366 296 368 300 368
+           C304 368 328 366 350 356 C348 386 330 404 300 404 Z" fill="#ffe8d6"/>
+
+  <!-- 刘海 -->
+  <path d="M212 320 C212 236 254 212 300 212 C346 212 388 236 388 320
+           C388 282 366 262 342 254 C358 268 366 292 362 316
+           C350 296 334 288 318 288 C330 302 330 322 322 336
+           C312 320 296 314 282 320 C286 306 286 292 280 282
+           C262 300 244 318 232 342 C228 334 224 326 212 320 Z"
+        fill="url(#hairFront)" stroke="#1d4a8a" stroke-width="1.5"/>
+
+  <!-- 侧发 -->
+  <path d="M212 320 C206 360 208 400 218 436 C226 470 238 494 250 508
+           L258 498 C244 470 234 438 232 402 C230 376 234 352 242 332 Z"
+        fill="url(#hairFront)"/>
+  <path d="M388 320 C394 360 392 400 382 436 C374 470 362 494 350 508
+           L342 498 C356 470 366 438 368 402 C370 376 366 352 358 332 Z"
+        fill="url(#hairFront)"/>
+
+  <!-- 眼睛（常态：圆睁） -->
+  <g>
+    <ellipse cx="266" cy="326" rx="13" ry="17" fill="#12365e"/>
+    <ellipse cx="334" cy="326" rx="13" ry="17" fill="#12365e"/>
+    <ellipse cx="262" cy="321" rx="5" ry="6" fill="#ffffff"/>
+    <ellipse cx="330" cy="321" rx="5" ry="6" fill="#ffffff"/>
+    <ellipse cx="269" cy="332" rx="3" ry="3.5" fill="#7fb6e8" opacity="0.85"/>
+    <ellipse cx="337" cy="332" rx="3" ry="3.5" fill="#7fb6e8" opacity="0.85"/>
+  </g>
+
+  <!-- 眉毛 -->
+  <path d="M244 300 C254 294 268 293 278 297" stroke="#173a6b" stroke-width="4" fill="none" stroke-linecap="round"/>
+  <path d="M322 297 C332 293 346 294 356 300" stroke="#173a6b" stroke-width="4" fill="none" stroke-linecap="round"/>
+
+  <!-- 嘴（微笑） -->
+  <path d="M280 368 C290 380 310 380 320 368" stroke="#c96a5e" stroke-width="4" fill="none" stroke-linecap="round"/>
+
+  <!-- 脸颊红晕 -->
+  <ellipse cx="244" cy="356" rx="16" ry="9" fill="url(#blush)"/>
+  <ellipse cx="356" cy="356" rx="16" ry="9" fill="url(#blush)"/>
+</svg>

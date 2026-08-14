@@ -28,9 +28,11 @@
 |---|---|
 | ![默认浅色](docs/screenshots/default-light.webp) | ![默认深色](docs/screenshots/default-dark.webp) |
 
-| 皮肤 mod（深海女仆工坊 maid-atelier）· 浅色 |
+| 皮肤 mod（深海女仆工坊 maid-atelier，[Small-tailqwq/dsh-deep-whale](https://github.com/Small-tailqwq/dsh-deep-whale)）· 浅色 |
 |---|
 | ![皮肤浅色](docs/screenshots/maid-atelier-light.webp) |
+
+> 致谢：本插件的女仆鲸鱼娘立绘素材取自 [dsh-deep-whale](https://github.com/Small-tailqwq/dsh-deep-whale) 皮肤（作者 Small-tailqwq），完整署名链见下方「素材来源与许可」。
 
 ## 形态与架构
 
@@ -91,7 +93,7 @@ assets/characters/deepseek/
 
 1. **一创 上善**（[Pixiv](https://www.pixiv.net/users/62155430) · [Bilibili：上善无形](https://b23.tv/8h5L4xz)）—— 鲸鱼娘角色形象原作者
 2. **二创 zipzip**（[Pixiv](https://www.pixiv.net/users/18604994) · [Bilibili：ZipZipPipe](https://b23.tv/Pnw6nG8)）—— 在其形象上加入 DeepSeek 元素的女仆鲸鱼娘二次设计（生成模型 GPT Image 2）
-3. **三创 Small-tailqwq**（[dsh-deep-whale / maid-atelier](https://github.com/dsh-external/dsh-deep-whale)）—— 本插件使用的女仆鲸鱼娘立绘素材即来自该皮肤（DeepSeek 元素再设计）
+3. **三创 Small-tailqwq**（[dsh-deep-whale / maid-atelier](https://github.com/Small-tailqwq/dsh-deep-whale)）—— 本插件使用的女仆鲸鱼娘立绘素材即来自该皮肤（DeepSeek 元素再设计）
 
 素材源文件在 `assets/characters/deepseek/`（`portraits/neutral.webp` 为透明底成品，`raw/` 为原图留档）。完整许可文本见 `LICENSE` 与 `NOTICE`。
 

@@ -87,6 +87,38 @@ function apply(ctx: any) {
     'galgame: dictionaries',
   )
   const t = ctx.locale.bind(NS)
+
+  // GalGame 模式激活时，在 conversation.composer 链上占一个更高优先级的空位，
+  // **恒接管并渲染空**：默认 InputBar / 提问面板 / 审批面板全部屏蔽——
+  // GalGame 有自己独立的输入条与浮层选项框，composer 区域不需要任何内容；
+  // 切回聊天视图（卸载）时注销抢占，默认输入栏恢复。
+  // （皮肤兼容通用方案：默认皮肤与皮肤 mod 均生效，避免双输入条/双提问框。）
+  let composerBlocker: (() => void) | null = null
+  const setGalgameMode = (active: boolean) => {
+    if (active && composerBlocker === null) {
+      try {
+        composerBlocker = ctx.slots.register(
+          {
+            name: 'conversation.composer',
+            priority: -100,
+            // 恒接管：GalGame 模式下 composer 恒为空
+            select: () => ({}),
+          },
+          // 空组件：接管后不渲染任何东西
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          function EmptyComposer() {
+            return null
+          } as any,
+        )
+      } catch {
+        composerBlocker = null
+      }
+    } else if (!active && composerBlocker !== null) {
+      composerBlocker()
+      composerBlocker = null
+    }
+  }
+
   ctx.slots.inject(
     'conversation.view',
     () =>
@@ -112,10 +144,12 @@ function apply(ctx: any) {
                 return false
               }
             },
+            // GalGame 模式激活开关：挂载时屏蔽默认提问面板，卸载时恢复。
+            setGalgameMode,
           }),
         },
         // 组件 props 为宽松接口；运行时契约与官方 view entry 一致
-        // （useSession / sessionId / t / sendSteer）。
+        // （useSession / sessionId / t / sendSteer / setGalgameMode）。
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         GalgameView as any,
       ),

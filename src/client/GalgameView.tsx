@@ -34,6 +34,8 @@ export interface GalgameViewProps {
   inputActions: { setDraft(text: string): void; submit(): void }
   /** 引导/插话发送（插件 inject 提供，问题 2：任务执行中默认 steer）。 */
   sendSteer: (text: string) => Promise<boolean>
+  /** GalGame 模式激活开关（插件 inject 提供）：挂载时屏蔽默认提问面板，卸载恢复。 */
+  setGalgameMode: (active: boolean) => void
   /** locale 翻译（注册时声明了 NS 命名空间）。 */
   t: (key: string, params?: Record<string, unknown>) => string
 }
@@ -43,12 +45,18 @@ const AUTO_ADVANCE_MS = 950
 /** 流式输出时句推进节奏 ms。 */
 const STREAM_ADVANCE_MS = 900
 
-export function GalgameView({ sessionId, useSession, useInput, inputActions, sendSteer, t }: GalgameViewProps) {
+export function GalgameView({ sessionId, useSession, useInput, inputActions, sendSteer, setGalgameMode, t }: GalgameViewProps) {
   const nodes = useSession((snapshot) => snapshot.nodes)
   const partial = useSession((snapshot) => snapshot.partial)
   const pending = useSession((snapshot) => snapshot.pending)
   const running = useSession((snapshot) => snapshot.running)
   const openState = useSession((snapshot) => snapshot.openState)
+
+  // GalGame 模式激活：屏蔽默认提问/审批面板（皮肤兼容）；卸载时恢复。
+  useEffect(() => {
+    setGalgameMode(true)
+    return () => setGalgameMode(false)
+  }, [setGalgameMode])
 
   // 配置（localStorage 持久化）。
   const [settings, setSettings] = useState<GalgameSettings>(() => loadSettings())

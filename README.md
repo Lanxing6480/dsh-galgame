@@ -71,6 +71,18 @@ assets/characters/deepseek/
 - 纯前端渲染 + `pending.respond`，不发模型请求、不阻塞 agent 循环。
 - 选项框/审批框位置已固化为默认值，仅调试模式可拖拽调整。
 
+## 素材来源与许可
+
+本插件**代码**（`src/`、`build/`）以 **MIT** 许可发布；**立绘素材**（`assets/`）为衍生创作，以 **CC BY-NC-SA 4.0**（署名-非商业性使用-相同方式共享）发布，**禁止任何商业性使用**。
+
+立绘素材为衍生创作，署名链（详见 `NOTICE`）：
+
+1. **一创 上善**（[Pixiv](https://www.pixiv.net/users/62155430) · [Bilibili：上善无形](https://b23.tv/8h5L4xz)）—— 鲸鱼娘角色形象原作者
+2. **二创 zipzip**（[Pixiv](https://www.pixiv.net/users/18604994) · [Bilibili：ZipZipPipe](https://b23.tv/Pnw6nG8)）—— 在其形象上加入 DeepSeek 元素的女仆鲸鱼娘二次设计（生成模型 GPT Image 2）
+3. **三创 Small-tailqwq**（[dsh-deep-whale / maid-atelier](https://github.com/dsh-external/dsh-deep-whale)）—— 本插件使用的女仆鲸鱼娘立绘素材即来自该皮肤（DeepSeek 元素再设计）
+
+素材源文件在 `assets/characters/deepseek/`（`portraits/neutral.webp` 为透明底成品，`raw/` 为原图留档）。完整许可文本见 `LICENSE` 与 `NOTICE`。
+
 ## 维护位置
 
 - 本项目 `plugins/dsh-galgame/`

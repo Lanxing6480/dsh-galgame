@@ -1,0 +1,32 @@
+dsh-galgame (GalGame 模式界面插件)
+=====================================
+
+Third-party derivative notice (CC BY-NC-SA 4.0 attribution chain)
+
+本插件的立绘素材（assets/characters/deepseek/）为衍生创作。按照
+CC BY-NC-SA 4.0 的署名 (Attribution) 与相同方式共享 (ShareAlike) 要求，
+创作链上的每一位上游作者均在此署名：
+
+1. 一创 (initial creation): 上善 —— 鲸鱼娘 (whale-girl) 角色形象的原作者。
+   个人主页 (profile): https://www.pixiv.net/users/62155430
+   The original whale-girl character design.
+
+2. 二创 (secondary creation): zipzip —— 在上善的鲸鱼娘形象基础上加入
+   DeepSeek 元素的女仆鲸鱼娘 (maid whale-girl) 二次设计（生成模型：GPT Image 2）。
+   个人主页 (profile): https://www.pixiv.net/users/18604994
+   The maid whale-girl redesign adding DeepSeek elements, based on 上善's
+   whale-girl (generated with GPT Image 2).
+
+3. 三创 (this plugin): Small-tailqwq (dsh-external/dsh-deep-whale) —— 本插件
+   使用的女仆鲸鱼娘立绘素材来自该皮肤（DeepSeek 元素再设计）。
+   The DeepSeek-element design used for the portrait assets in this plugin,
+   sourced from the maid-atelier skin.
+
+插件代码（src/、build/、lib/）以 MIT 许可发布，与本素材许可相互独立。
+立绘素材使用条款: CC BY-NC-SA 4.0 —— 署名 (attribution) 必须保留以上完整
+创作链；非商业性使用 (non-commercial only)；衍生作品必须以相同方式共享
+(share-alike)。
+
+Usage terms for the portrait assets: CC BY-NC-SA 4.0 —— full attribution
+chain above must be retained; non-commercial only; derivatives must be
+shared under the same license.

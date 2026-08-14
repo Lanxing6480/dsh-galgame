@@ -33,7 +33,8 @@
     "assets",
     "README.md",
     "DESIGN.md",
-    "LICENSE"
+    "LICENSE",
+    "NOTICE"
   ],
   "publishConfig": {
     "access": "public"

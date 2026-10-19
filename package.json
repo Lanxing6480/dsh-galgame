@@ -3,6 +3,14 @@
   "description": "GalGame mode for the dsh web GUI: a third conversation view tab (after 轨迹) that renders the real agent session as a visual-novel stage — whale-girl (DeepSeek) portrait with diff switching + draggable thinking bubble, Markdown dialogue box with typewriter + block paging, GalGame-style question/approval choices bound to the portrait, backlog drawer, and a debug mode. Pure presentation layer: never writes the session and never blocks the agent loop.",
   "version": "1.2.0",
   "private": false,
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Lanxing6480/dsh-galgame.git"
+  },
+  "homepage": "https://github.com/Lanxing6480/dsh-galgame#readme",
+  "bugs": {
+    "url": "https://github.com/Lanxing6480/dsh-galgame/issues"
+  },
   "type": "module",
   "engines": {
     "node": "^22.19.0 || >=24.0.0",
@@ -32,7 +40,7 @@
     "lib",
     "cordis.patch.yml",
     "src",
-    "assets",
+    "assets/characters/deepseek/portraits",
     "docs",
     "README.md",
     "DESIGN.md",

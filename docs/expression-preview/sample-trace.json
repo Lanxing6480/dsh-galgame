@@ -1,0 +1,37 @@
+{
+  "source": "test/fixtures/expression-work-report.md",
+  "characters": 2569,
+  "units": 10,
+  "events": [
+    {
+      "unit": 1,
+      "offset": 4,
+      "from": "neutral",
+      "to": "surprised",
+      "reason": "语气命中：呜哇"
+    },
+    {
+      "unit": 2,
+      "offset": 18,
+      "from": "surprised",
+      "to": "neutral",
+      "reason": "普通工作表达，使用平静姿态"
+    },
+    {
+      "unit": 6,
+      "offset": 702,
+      "from": "neutral",
+      "to": "happy",
+      "reason": "语气命中：59 项全绿"
+    },
+    {
+      "unit": 7,
+      "offset": 11,
+      "from": "happy",
+      "to": "neutral",
+      "reason": "普通工作表达，使用平静姿态"
+    }
+  ],
+  "elapsedMs": 43.06,
+  "note": "Single local Node run of all visible prefixes, excluding UI/images. Not a browser latency or semantic accuracy benchmark."
+}

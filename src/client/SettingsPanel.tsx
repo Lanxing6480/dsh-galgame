@@ -41,6 +41,11 @@ export function SettingsPanel({ settings, onChange, onClose, t }: SettingsPanelP
         </div>
         <div className={styles.settingsBody}>
           <ToggleRow
+            label={t('galgame.settings.expressions')}
+            checked={settings.expressions}
+            onChange={(value) => onChange({ expressions: value })}
+          />
+          <ToggleRow
             label={t('galgame.settings.autoMode')}
             checked={settings.autoMode}
             onChange={(value) => onChange({ autoMode: value })}

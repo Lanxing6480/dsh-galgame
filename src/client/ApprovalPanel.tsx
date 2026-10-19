@@ -1,28 +1,19 @@
 /**
  * dsh-galgame — ApprovalLayer：Agent 权限申请 → GalGame 风格审批框（bug 修复 1）。
  *
- * 数据来自会话快照的 pending（kind === 'approval'），与 question 同通道：
- * 非全屏卡片，浮在立绘前、对话框上方，answer('allowed-once' | 'rejected')。
+ * 数据来源（DSH 0.2.0-rc.2）：会话 UI 状态的 `pendingInteraction`，其 `kind`
+ * 为 `'approval'` 时是 dsh-client-ui-approval 发布的 `PendingApproval`：
+ * 工具名与原因在 `toolName` / `reason`，决策走 `answer('allowed-once' | 'rejected')`。
+ * 非全屏卡片，浮在立绘前、对话框上方。
  */
 import { useState } from 'react'
+import type { PendingApprovalWait } from './types.ts'
 import { useHostDrag } from './useHostDrag.ts'
 import styles from './galgame.module.css'
 
-export interface ApprovalWait {
-  kind: 'approval'
-  key: string
-  sessionId: string
-  payload: {
-    approvalId: string
-    toolName?: string
-    reason?: string
-    callId?: string
-  }
-  respond(result: unknown): Promise<unknown>
-}
-
 export interface ApprovalPanelProps {
-  wait: ApprovalWait
+  /** pendingInteraction 里的审批载体（PendingApproval）。 */
+  wait: PendingApprovalWait
   /** 关联命令文本（从工具调用 args 提取的可读命令），可选。 */
   command?: string | null
   /** 是否允许拖拽调整位置（仅调试模式开启）。 */
@@ -36,17 +27,14 @@ export function ApprovalPanel({ wait, command, draggable = false, t }: ApprovalP
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const respond = (outcome: 'allowed-once' | 'rejected') => {
+  const decide = (outcome: 'allowed-once' | 'rejected') => {
     if (busy) return
     setBusy(true)
     setError(null)
     wait
-      .respond({
-        ok: true,
-        value: { sessionId: wait.sessionId, approvalId: wait.payload.approvalId, outcome },
-      })
+      .answer(outcome)
       .then(() => {
-        // 提交成功后 approval/resolved 会清掉 pending，组件随之卸载。
+        // 提交成功后该 interaction 从会话状态清除，组件随之卸载。
       })
       .catch((cause: unknown) => {
         setBusy(false)
@@ -54,7 +42,7 @@ export function ApprovalPanel({ wait, command, draggable = false, t }: ApprovalP
       })
   }
 
-  const title = wait.payload.reason ?? t('galgame.approval.escalation', { toolName: wait.payload.toolName ?? '未知工具' })
+  const title = wait.reason ?? t('galgame.approval.escalation', { toolName: wait.toolName })
 
   return (
     <div
@@ -80,7 +68,7 @@ export function ApprovalPanel({ wait, command, draggable = false, t }: ApprovalP
             type="button"
             className={styles.choiceCancel}
             disabled={busy}
-            onClick={() => respond('rejected')}
+            onClick={() => decide('rejected')}
           >
             {t('galgame.approval.reject')}
           </button>
@@ -88,7 +76,7 @@ export function ApprovalPanel({ wait, command, draggable = false, t }: ApprovalP
             type="button"
             className={styles.choiceButton}
             disabled={busy}
-            onClick={() => respond('allowed-once')}
+            onClick={() => decide('allowed-once')}
           >
             {busy ? t('galgame.choice.submitting') : t('galgame.approval.allowOnce')}
           </button>

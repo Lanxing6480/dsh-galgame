@@ -48,17 +48,19 @@ const SKIP_WORKSPACE_BUILD: UserConfig = { entry: '' }
 /**
  * Documented TEMPORARY exemption, not a platform module (hence not in
  * web-platform.ts): the snapshot-store engine (createSnapshotStore/defineStore/
- * shallowEqual) lives in runtime pending its promotion-time rehoming, and
- * five importers (locale, ui-layout, ui-conversation ×3) ride this single
- * exemption. At runtime the lazy CJS table answers the require natively:
- * runtime is an immediately-tier row, its factory is registered before any
- * dependent bundle materializes. TODO(webload/store-rehome): remove with the
- * store-engine relocation follow-up.
+ * shallowEqual) used to live in runtime pending its promotion-time rehoming, and
+ * five importers (locale, ui-layout, ui-conversation ×3) rode this single
+ * exemption. On dsh 0.2.0-rc.2 that rehoming happened: the engine is the
+ * platform module `@deepseek-ai/dsh-client-store`, so this exemption is empty
+ * and kept only as the single place a future temporary external would live.
  */
-const RUNTIME_STORE_EXEMPTION = '@deepseek-ai/dsh-client-runtime/client'
+const RUNTIME_STORE_EXEMPTION = undefined
 
-/** Externals resolved from the loader module table: the platform seed entries plus the documented runtime exemption. */
-export const CLIENT_EXTERNALS: readonly string[] = [...PLATFORM_MODULES, RUNTIME_STORE_EXEMPTION]
+/** Externals resolved from the loader module table: the platform seed entries plus the temporary exemption when one is declared. */
+export const CLIENT_EXTERNALS: readonly string[] = [
+  ...PLATFORM_MODULES,
+  ...(RUNTIME_STORE_EXEMPTION === undefined ? [] : [RUNTIME_STORE_EXEMPTION]),
+]
 
 const REPOSITORY_ROOT = fileURLToPath(new URL('..', import.meta.url))
 

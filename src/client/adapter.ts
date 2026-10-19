@@ -10,7 +10,6 @@
 import type {
   AssistantBlock,
   ConversationNode,
-  ConversationSnapshotView,
   PartialAssistant,
   ScriptLine,
 } from './types.ts'
@@ -115,6 +114,7 @@ function lineFromNode(node: ConversationNode): ScriptLine | null {
     if (text === '') return null
     return {
       key: `user-${node.seq}`,
+      playbackKey: `user-${node.seq}`,
       seq: node.seq,
       speaker: 'user',
       name: '我',
@@ -131,6 +131,8 @@ function lineFromNode(node: ConversationNode): ScriptLine | null {
     const reasoning = reasoningTextOfBlocks(node.blocks)
     return {
       key: `assistant-${node.seq}`,
+      playbackKey: typeof node.turn === 'number' && typeof node.step === 'number'
+        ? `assistant-${node.turn}-${node.step}` : `assistant-${node.seq}`,
       seq: node.seq,
       speaker: 'assistant',
       name: '鲸鱼娘',
@@ -168,6 +170,7 @@ export function partialLine(partial: PartialAssistant | null): ScriptLine | null
   if (text === '' && reasoning === '') return null
   return {
     key: `partial-${partial.turn}-${partial.step}`,
+    playbackKey: `assistant-${partial.turn}-${partial.step}`,
     seq: Number.MAX_SAFE_INTEGER - partial.turn,
     speaker: 'assistant',
     name: '鲸鱼娘',

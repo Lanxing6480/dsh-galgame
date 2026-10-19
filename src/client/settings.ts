@@ -9,6 +9,8 @@ export interface GalgameSettings {
   typeSpeed: number
   /** 说话弹跳动画。 */
   bounce: boolean
+  /** Local expression selection; no model requests. */
+  expressions: boolean
   /** 思考气泡（显示思维链）。 */
   bubble: boolean
   /** 调试模式：显示各图层/组件边框范围（不同颜色区分）。 */
@@ -19,6 +21,7 @@ export const DEFAULT_SETTINGS: GalgameSettings = {
   autoMode: true,
   typeSpeed: 28,
   bounce: true,
+  expressions: true,
   bubble: true,
   debug: false,
 }
@@ -35,6 +38,7 @@ export function loadSettings(): GalgameSettings {
       autoMode: typeof parsed.autoMode === 'boolean' ? parsed.autoMode : DEFAULT_SETTINGS.autoMode,
       typeSpeed: typeof parsed.typeSpeed === 'number' ? parsed.typeSpeed : DEFAULT_SETTINGS.typeSpeed,
       bounce: typeof parsed.bounce === 'boolean' ? parsed.bounce : DEFAULT_SETTINGS.bounce,
+      expressions: typeof parsed.expressions === 'boolean' ? parsed.expressions : DEFAULT_SETTINGS.expressions,
       bubble: typeof parsed.bubble === 'boolean' ? parsed.bubble : DEFAULT_SETTINGS.bubble,
       debug: typeof parsed.debug === 'boolean' ? parsed.debug : DEFAULT_SETTINGS.debug,
     }

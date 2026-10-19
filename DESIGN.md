@@ -1,9 +1,21 @@
 # dsh-galgame · DESIGN.md
 
-> GalGame 模式界面插件 · 设计文档（阶段：第一版实现指南）
-> 依据：`Agent_GalGame_UI_参考与设计指南_Markdown.md`（视觉小说 UI 参考）+ DSH 0.1.0-rc.6 实际源码契约
+> GalGame 模式界面插件 · 设计文档（阶段：第一版实现指南 + v1.2.0 契约迁移）
+> 依据：`Agent_GalGame_UI_参考与设计指南_Markdown.md`（视觉小说 UI 参考）+ **DSH 0.2.0-rc.2** 实际源码契约
+>
+> 契约版本沿革：v1.0.0 / v1.1.0 依据 DSH `0.1.0-rc.6`；v1.2.0 依据 `0.2.0-rc.2`
+> 重新对齐了数据来源（`useChat` / `useSession` / `useSessionStatus`）与等待交互对象
+> （`PendingQuestion` / `PendingApproval`），迁移对照见 §3.6。
 
 ## 0. 一句话
+
+### 2026-10-18 本地自动表情扩展（未发布）
+
+`expressionDirector.ts` 将表达功能与情绪词／动作短语结合，明确返回 portrait 或 keep；`expressionPlayback.ts` 按消息和显示单元缓存，逐个处理可见短句边界，使网络分块不影响演出结果。`DialogueBox.onVisibleText` 只上报已显示前缀，`GalgameView` 据此更新舞台；思考专用差分由 reasoning-only 流式状态驱动。
+
+稳定身份：ScriptLine.playbackKey 对 assistant 优先用 turn+step，缺失时退回 seq；partial 与 settled 不使用两套演出 key。GalgameView 按 sessionId 重挂局部状态，播放位置 localStorage 也按会话隔离。原说话弹跳与自动表情开关独立，不新增付费推理或会话事件写入。
+
+资源：8 种差分，PNG 独立副本 + 原版 happy；Stage 固定比例画框，预加载成功才切换，过期请求取消，旧图保留至淡化结束。未制作工具专用立绘，未启用晕倒／强抖动。下文早期“仅 neutral／不做自动分类”描述为历史阶段范围。
 
 在 DSH Web 聊天主界面新增第三个标签栏「galgame 模式」（位于「轨迹」右侧），把真实的 agent 会话渲染成 GalGame 演出：鲸鱼娘立绘 + 差分 + 对话框 + 打字机 + 分句点击 + 提问选项 + 历史回顾。**纯视觉层**：不写会话、不干预 agent 循环，随时可切回常规聊天。
 
@@ -16,18 +28,20 @@
 | 3 | 进入召唤鲸鱼娘立绘 | 默认角色 manifest `deepseek`（鲸鱼娘），Stage 立绘层 |
 | 4 | 输入框正常输入 | `conversation.composer` 与 `conversation.view` 相互独立（ConversationRoot 固定渲染 composer），视图内无需自建输入框 |
 | 5 | 隐藏工具调用/思维链 | adapter 只提取 `AssistantBlock` 中 `kind === 'text'` 的块；user 侧取 `content` 的 text 块 |
-| 6 | 提问工具 → GalGame 选择窗口 | `useSession((s) => s.pending)` 过滤 `kind === 'question'`，ChoicePanel 渲染选项，`wait.respond(...)` 回答案 |
+| 6 | 提问工具 → GalGame 选择窗口 | `useSessionStatus((map) => map.get(sessionId)?.pendingInteraction)` 取 `kind: 'question' / 'plan-review'` 的 `PendingQuestion`，ChoicePanel 渲染选项后 `wait.answer(批次)` |
 | 7 | 与常规对话不冲突随时切换 | 视图激活态由 conversation 的 store（`s.view`）管理，标签栏原生支持；本插件零状态写 |
 | 8 | 说话蹦两下 | CSS keyframes（bounce），`prefers-reduced-motion` 时关闭 |
 | 9 | 长输出分句点击 | `splitIntoSentences()` 分句器；DialogueBox 维护句索引，点击/空格推进 |
-| 10 | 执行时长输出自动模式 | `s.running` 且流式输出时自动推进分句；用户点击即暂停自动 |
+| 10 | 执行时长输出自动模式 | `useSession(s => s.running)` 且流式输出时自动推进分句；用户点击即暂停自动 |
 | 11 | 右上角展开历史 | Backlog 抽屉：完整台词回放（含已隐藏的工具信息摘要） |
-| 12 | 纯视觉不阻塞 | 只订阅快照 + respond 交互；不发模型请求、不调用 session 写入 |
+| 12 | 纯视觉不阻塞 | 只订阅快照 + 交互对象作答；不发模型请求、不写会话日志 |
 
 ## 2. 架构（参考文档「聊天数据与演出 UI 分离」）
 
 ```
-ConversationSnapshot (useSession 只读)
+useChat(s => s.legacy)      ─ 台词数据（nodes / partial，Chat 视图目标的兼容投影）
+useSession                  ─ 会话生命周期（running / openState / blank …）
+useSessionStatus            ─ 等待交互（pendingInteraction：提问 / 审批领域对象）
         │
         ▼
 GalgameAdapter（纯函数，无副作用）
@@ -50,10 +64,13 @@ React 渲染层
 
 关键边界：
 - **adapter 不碰 DOM/React**，纯函数便于测试。
-- **演出状态只存组件局部**；切换视图/会话后重放历史（由 snapshot 重建），不持久化演出位置。
-- **不写 conversation 的任何数据**：不 publish 事件、不注册 conversationEvents。
+- **演出状态只存组件局部**；切换视图/会话后重放历史（由快照重建），不持久化演出位置。
+- **不写 conversation 的任何数据**：不 publish 事件、不注册 conversationEvents、不写会话日志。
+- **发送不依赖 composer 草稿机**：GalGame 模式接管 `conversation.composer` 链后，
+  默认输入卡的 Lexical 编辑器不再挂载，故 `sendTurn` / `sendSteer` 直发
+  `ctx.sessions.binding(id).session.prompt([{type:'text',text}], 'queue' | 'steer')`。
 
-## 3. 关键契约（来自 DSH 0.1.0-rc.6 源码，非猜测）
+## 3. 关键契约（来自 DSH 0.2.0-rc.2 源码，非猜测）
 
 ### 3.1 标签栏注册（仿 dsh-client-ui-trajectory）
 ```ts
@@ -63,35 +80,48 @@ ctx.slots.inject('conversation.view', () => ctx.slots.register({
   order: 20,                      // chat=0, trajectory=10 → 第三个
   locale: NS,
   label: () => t('view.galgame'),
-  inject: (sessionId) => ({ hooks: { ... }, ... }),
+  inject: (sessionId) => ({ sendTurn, sendSteer, setGalgameMode }),
 }, GalgameView))
 ```
-- 视图组件标准 props：`useSession, useSessions, useStore, renderSlot, sessionId, actions` + entry inject + `t`。
-- 视图切换：`resolveActiveView(tabs, store.view)`，缺失回退 `chat`。✅
+- 视图组件标准 props（0.2.0-rc.2）：`sessionId` + `useSession` + `useProjection`
+  （session 标准席位，ui-session 提供）、`useConversation` / `useInput` / `inputActions`
+  （conversation 标准席位）、`useChat`（chat 标准席位）、`useSessions` / `useSessionStatus` /
+  `useSessionRetainInfo`（全局席位）+ entry inject + `t`。
+- 视图切换：`resolveView(tabs, store.view)`，缺失回退 `chat`。✅
 
-### 3.2 会话快照（useSession）
+### 3.2 数据来源（0.2.0-rc.2 三处分工）
 ```
-s.chat.order: string[]                    节点 key 顺序
-s.chat.nodes.get(key) → ChatConversationViewNode
-s.nodes: ConversationNode[]               （legacy 顶层，直接可用）
-  - UserMessageNode    {kind:'user', seq, time, content: ContentBlock[]}
-  - AssistantMessageNode{kind:'assistant', seq, time, turn, step,
-                         blocks: AssistantBlock[]}
-  - SteeringMessageNode{kind:'steering', ...}
-  - ToolResultNode / CommandNode / Compaction / Context / ...
-s.partial: {turn, step, blocks: AssistantBlock[]} | null  流式中
-s.pending: PendingInteraction[]          提问/审批等待
-s.running: boolean                       是否运行中
-s.queue: QueuedMessage[]                 输入队列
+useChat(s => s.legacy).nodes: readonly ConversationNode[]
+  - UserMessageNode     {kind:'user', seq, time, content: ContentBlock[]}
+  - AssistantMessageNode{kind:'assistant', seq, time, turn, step, blocks: AssistantBlock[]}
+  - SteeringMessageNode / ToolResultNode / CommandNode / Compaction / Context / ...
+useChat(s => s.legacy).partial: {turn, step, blocks: AssistantBlock[]} | null  流式中
+
+useSession (SessionSnapshot)
+  - running / openState('cold'|'loading'|'open'|'error') / openError / blank
+  - hasMore / loadingOlder / pendingSubmissions / promptError / awaitingFirstTurn …
+
+useSessionStatus (ReadonlyMap<SessionId, SessionStatus>)
+  - running / completionUnread / pendingInteraction（单条、按领域优先级取胜）
 ```
 
-### 3.3 提问交互（仿 dsh-client-ui-user-questions）
+> `legacy` 是 Chat 视图目标的兼容投影（`LegacyConversationSlice`），由 ui-chat 的
+> `ChatViewBuilder` 逐节点增量维护，字段与 0.1.0-rc.6 的顶层 `nodes` / `partial` 完全一致；
+> 隐藏节点（工具结果等）仍不出现在其中，正好符合「幕后隐藏」的演出需求。
+
+### 3.3 等待交互（0.2.0-rc.2 的领域对象）
 ```ts
-// pending 里 kind === 'question' 的 wait
-wait.payload.questions: [{id, question, options?: [{label, description}], multiSelect?, detail?, header?}]
-wait.respond({ ok: true, value: { sessionId, answer } })
-  // answer: Array<{ questionId, selected: string[], custom?: string }>
-wait.respond({ ok: false, error: { code: 'cancelled', message, details: {} } })
+// pendingInteraction 可能是（kind 判别）：
+// 1) PendingQuestion（dsh-client-ui-user-questions 发布）
+kind: 'question' | 'plan-review'
+questions: [{id, question, options?: [{label, description?}], multiSelect?, detail?, header?}]
+answer({ answers: [{ id, selected: string[], custom?: string }] }): Promise<void>
+dismiss(): Promise<void>          // 工具调用型卡片只收起；无 callId 的阻塞请求会结束请求
+
+// 2) PendingApproval（dsh-client-ui-approval 发布）
+kind: 'approval'
+toolName: string; reason?: string; callId?: string; answerable: boolean
+answer('allowed-once' | 'rejected'): Promise<void>
 ```
 
 ### 3.4 静态资源（Host 半边）
@@ -99,6 +129,31 @@ wait.respond({ ok: false, error: { code: 'cancelled', message, details: {} } })
 ctx.webServer.register({ kind: 'prefix', path: '/api/dsh-galgame/assets', handler })
 // handler 从包内 assets/ 目录读文件返回（image/webp, image/png）
 ```
+
+### 3.5 composer 接管（GalGame 模式激活期间）
+```ts
+// conversation.composer 是 chain：升序 priority 逐个跑 select，第一个非 null 者当选。
+ctx.slots.register({
+  name: 'conversation.composer',
+  priority: -100,          // 最小 → 最先尝试
+  select: () => ({}),      // 恒命中
+}, function EmptyComposer() { return null })
+```
+- 默认输入卡、官方提问卡、官方审批卡全部让位给 GalGame 自己的输入条与浮层，避免双输入条/双提问框；
+- 视图卸载（切回聊天）时注销，官方 composer 自动恢复。
+
+### 3.6 与 0.1.0-rc.6 的迁移对照
+
+| 用途 | 0.1.0-rc.6 | 0.2.0-rc.2 |
+|---|---|---|
+| 台词节点 | `useSession(s => s.nodes)` | `useChat(s => s.legacy.nodes)` |
+| 流式片段 | `useSession(s => s.partial)` | `useChat(s => s.legacy.partial)` |
+| 运行中 | `useSession(s => s.running)` | `useSession(s => s.running)`（仍在 SessionSnapshot） |
+| 打开态 | `useSession(s => s.openState)` | 同上（取值集合不变） |
+| 提问/审批 | `useSession(s => s.pending)` + `wait.respond(...)` | `useSessionStatus(map => map.get(id)?.pendingInteraction)` + `wait.answer(...)` / `dismiss()` |
+| 提问答案 | `respond({ok:true, value:{sessionId, answer}})` | `answer({answers})`（wire 形状相同，去掉信封） |
+| 发送 | `inputActions.setDraft + submit` | `session.prompt([{type:'text',text}], 'queue'\|'steer')` |
+| 平台模块表 | react/cordis/slots/primitives/… + `dsh-client-runtime/client` 豁免 | react/cordis/**dsh-client-store**/slots/primitives/**ui-dockkit** |
 
 ## 4. 第一版范围（参考文档「第一阶段明确不做」）
 
@@ -165,16 +220,22 @@ interface PlaybackState {
 
 | 文件 | 职责 |
 |---|---|
-| `src/client/index.ts` | `apply(ctx)`：locale 注册 + `conversation.view` 注册 |
+| `src/client/index.ts` | `apply(ctx)`：locale 注册 + `conversation.view` 注册 + composer 链接管 + prompt 直发 |
+| `src/client/types.ts` | 0.2.0-rc.2 窄契约类型（不深依赖官方类型包） |
 | `src/client/manifest.ts` | 鲸鱼娘 CharacterManifest + 资源 URL 解析 |
-| `src/client/adapter.ts` | snapshot → ScriptLine[]（过滤/分句） |
-| `src/client/GalgameView.tsx` | 根：订阅快照、编排 Stage/Dialogue/Choice/Backlog |
-| `src/client/Stage.tsx` | 立绘层：差分 crossfade + 弹跳 |
-| `src/client/DialogueBox.tsx` | 名字牌+文本框+打字机+继续指示 |
-| `src/client/ChoicePanel.tsx` | 提问选项（pending question → respond） |
+| `src/client/adapter.ts` | 快照 → ScriptLine[]（过滤/分块） |
+| `src/client/GalgameView.tsx` | 根：订阅 useChat/useSession/useSessionStatus、编排 Stage/Dialogue/Choice/Approval/Backlog |
+| `src/client/Stage.tsx` | 立绘层：差分 crossfade + 弹跳 + 思考气泡 |
+| `src/client/DialogueBox.tsx` | 名字牌+文本框+打字机+翻页指示 |
+| `src/client/GalgameInput.tsx` | 常驻输入条（running → steer / 空闲 → queue） |
+| `src/client/ChoicePanel.tsx` | 提问选项（PendingQuestion → answer/dismiss） |
+| `src/client/ApprovalPanel.tsx` | 审批卡（PendingApproval → answer） |
+| `src/client/SettingsPanel.tsx` | 设置面板（自动翻句/打字机/弹跳/气泡/调试） |
 | `src/client/Backlog.tsx` | 历史抽屉 |
 | `src/client/*.module.css` | 各组件样式（Design Tokens 集中） |
 | `src/index.ts` | Host：`/api/dsh-galgame/assets/*` 静态路由 |
+| `test/smoke.test.mjs` | 零依赖冒烟：bundle factory / 注册面 / inject / 无状态渲染 |
+| `test/dom.test.mjs` | jsdom 交互：打字机翻页 / 作答 / 审批 / 输入条 |
 
 ## 9. 实施顺序（对应参考文档 Step 1～7）
 

@@ -6,6 +6,10 @@ node_modules/
 *.log
 .tmp/
 
+# 表情差分原始候选：与 portraits/expressions-v1/ 逐字节相同（SHA256 已逐张比对），
+# 入库等于把 ~12 MB 重复二进制推上远端，故排除。本地留档不影响使用。
+assets/characters/deepseek/raw/expression-candidates/
+
 # 构建产物提交入库（便于 link 安装即用，与 dsh-skill-manager 先例一致）
 # 如不希望提交 lib/，取消下面注释
 # lib/

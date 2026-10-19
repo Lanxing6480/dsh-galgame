@@ -1,29 +1,32 @@
 /**
  * dsh-galgame — ChoiceLayer：提问工具（ask_user_question）→ GalGame 选择窗口（需求 6）。
  *
- * 数据来自会话快照的 pending（kind === 'question'）：
- * 选项按钮直接 respond 答案，agent 循环不被阻塞（纯前端交互）。
+ * 数据来源（DSH 0.2.0-rc.2）：会话 UI 状态的 `pendingInteraction`，其 `kind`
+ * 为 `'question'` / `'plan-review'` 时是 dsh-client-ui-user-questions 发布的
+ * `PendingQuestion` 领域对象——题目在 `questions`，作答走 `answer(batch)`，
+ * 关闭走 `dismiss()`。全程纯前端交互，agent 循环不被阻塞。
  */
 import { useState } from 'react'
-import type { PendingQuestionWait, QuestionItem } from './types.ts'
+import type { PendingQuestionWait, QuestionAnswerItem, QuestionItem } from './types.ts'
 import { useHostDrag } from './useHostDrag.ts'
 import styles from './galgame.module.css'
 
 export interface ChoicePanelProps {
-  /** pending 里 kind === 'question' 的交互载体。 */
+  /** pendingInteraction 里的提问载体（PendingQuestion）。 */
   wait: PendingQuestionWait
   /** 是否允许拖拽调整位置（仅调试模式开启，位置已固化为默认值）。 */
   draggable?: boolean
   t: (key: string, params?: Record<string, unknown>) => string
 }
 
-/** 组装答案 wire 格式（与 dsh-client-ui-user-questions 一致）。 */
-function buildAnswers(questions: readonly QuestionItem[], values: { selected: string[]; custom: string }[]): {
-  answers: { id: string; selected: string[]; custom?: string }[]
-} {
+/** 组装答案 wire 格式（官方 AskUserQuestionAnswer）。 */
+function buildAnswers(
+  questions: readonly QuestionItem[],
+  values: { selected: string[]; custom: string }[],
+): { answers: QuestionAnswerItem[] } {
   return {
     answers: questions.map((item, index) => {
-      const value = values[index]
+      const value = values[index] ?? { selected: [], custom: '' }
       const custom = value.custom.trim()
       return {
         id: item.id,
@@ -35,7 +38,7 @@ function buildAnswers(questions: readonly QuestionItem[], values: { selected: st
 }
 
 export function ChoicePanel({ wait, draggable = false, t }: ChoicePanelProps) {
-  const questions = wait.payload.questions
+  const questions = wait.questions
   // 选项框拖拽：以立绘容器为坐标系；默认位置为用户调好的排版（left -627, top 80），
   // 平时不可拖（draggable=false），调试模式开启时可拖。
   const drag = useHostDrag('dsh.galgame.choicePos', true, { left: -627, top: 80 }, draggable)
@@ -53,7 +56,7 @@ export function ChoicePanel({ wait, draggable = false, t }: ChoicePanelProps) {
   const multi = question.multiSelect === true
   const options = question.options ?? []
   const hasOptions = options.length > 0
-  const draft = drafts[index]
+  const draft = drafts[index] ?? { selected: [], custom: '' }
 
   const patchDraft = (patch: Partial<{ selected: string[]; custom: string }>) => {
     setDrafts((current) => current.map((item, itemIndex) => (itemIndex === index ? { ...item, ...patch } : item)))
@@ -86,9 +89,9 @@ export function ChoicePanel({ wait, draggable = false, t }: ChoicePanelProps) {
     setBusy(true)
     const answer = buildAnswers(questions, drafts)
     wait
-      .respond({ ok: true, value: { sessionId: wait.sessionId, answer } })
+      .answer(answer)
       .then(() => {
-        // 提交成功后 pending 会被会话清除，组件随之卸载。
+        // 提交成功后该 interaction 从会话状态清除，组件随之卸载。
       })
       .catch((cause: unknown) => {
         setBusy(false)
@@ -98,10 +101,9 @@ export function ChoicePanel({ wait, draggable = false, t }: ChoicePanelProps) {
 
   const cancel = () => {
     if (busy) return
-    wait.respond({
-      ok: false,
-      error: { code: 'cancelled', message: 'the user closed this question request', details: {} },
-    }).catch(() => {})
+    // 工具调用型卡片只收起卡片（请求仍可由工具行重开）；
+    // 没有 callId 的阻塞型请求则等同结束请求——行为由官方对象决定。
+    wait.dismiss().catch(() => {})
   }
 
   return (

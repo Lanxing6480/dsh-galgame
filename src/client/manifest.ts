@@ -5,10 +5,8 @@
  * 差分规范（参考文档 5.5）：同画布、同人物锚点（bottom-center）、同基准线；
  * 差分切换时人物不跳位。
  *
- * 当前差分：仅 neutral（用户提供的透明底立绘）。
- * 后续补差分：把 smile.webp / thinking.webp / angry.webp 放入
- * `assets/characters/deepseek/portraits/`，并在下方 portraits 增加条目即可——
- * 组件全链路已按 portrait ID 解析，接口已预留。
+ * 8 种基础差分；原版 neutral.webp 作为 happy 保留。
+ * 生成差分单独存放，原图和候选稿不覆盖。
  */
 import type { CharacterManifest } from './types.ts'
 
@@ -22,11 +20,14 @@ export const DEEPSEEK_MANIFEST: CharacterManifest = {
   anchor: [0.5, 1.0],
   baseScale: 1.0,
   portraits: {
-    neutral: { src: 'characters/deepseek/portraits/neutral.webp', type: 'image' },
-    // 差分接口（后续补图后取消注释并放入对应文件）：
-    // smile:    { src: 'characters/deepseek/portraits/smile.webp', type: 'image' },
-    // thinking: { src: 'characters/deepseek/portraits/thinking.webp', type: 'image' },
-    // angry:    { src: 'characters/deepseek/portraits/angry.webp', type: 'image' },
+    neutral: { src: 'characters/deepseek/portraits/expressions-v1/neutral.webp', type: 'image' },
+    happy: { src: 'characters/deepseek/portraits/neutral.webp', type: 'image' },
+    thinking: { src: 'characters/deepseek/portraits/expressions-v1/thinking.webp', type: 'image' },
+    surprised: { src: 'characters/deepseek/portraits/expressions-v1/surprised.webp', type: 'image' },
+    helpless: { src: 'characters/deepseek/portraits/expressions-v1/helpless.webp', type: 'image' },
+    angry: { src: 'characters/deepseek/portraits/expressions-v1/angry.webp', type: 'image' },
+    sad: { src: 'characters/deepseek/portraits/expressions-v1/sad.webp', type: 'image' },
+    shy: { src: 'characters/deepseek/portraits/expressions-v1/shy.webp', type: 'image' },
   },
 }
 

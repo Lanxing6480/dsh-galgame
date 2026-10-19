@@ -9,7 +9,7 @@
  *  - ◀ ▶ 前后翻页（含跨行回退），文本框半透明自适应长度。
  */
 import { useEffect, useRef, useState } from 'react'
-import { MarkdownText } from '@deepseek-ai/dsh-client-ui-primitives'
+import { MarkdownText, type MarkdownLabels } from '@deepseek-ai/dsh-client-ui-primitives'
 import styles from './galgame.module.css'
 
 export interface DialogueBoxProps {
@@ -27,8 +27,12 @@ export interface DialogueBoxProps {
   streaming: boolean
   /** 打字机速度（ms/帧），越小越快。 */
   typeSpeed: number
+  /** Markdown 组件文案（代码块工具栏 / 脚注），必须传。 */
+  labels: MarkdownLabels
   /** 本次切换是否跳过打字机（滚轮跳转，体验优化 1）。 */
   instant?: boolean
+  /** Reports only text actually painted by the typewriter. */
+  onVisibleText?: (text: string, finished: boolean) => void
   /** 点击/▶ 推进下一单元。 */
   onNext: () => void
   /** ◀ 回退上一单元（可跨行）。 */
@@ -42,10 +46,15 @@ export interface DialogueBoxProps {
 /** 打字机每帧追加字符数。 */
 const TYPE_STEP = 2
 
-export function DialogueBox({ name, isUser, unit, lineKey, autoMode, streaming, typeSpeed, instant = false, onNext, onPrev, canPrev, position }: DialogueBoxProps) {
+export function DialogueBox({ name, isUser, unit, lineKey, autoMode, streaming, typeSpeed, labels, instant = false, onVisibleText, onNext, onPrev, canPrev, position }: DialogueBoxProps) {
   const [shown, setShown] = useState(0)
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const prevUnitRef = useRef<string | null>(null)
+
+  // Preserve already visible streaming/auto text when the same unit settles.
+  useEffect(() => {
+    if (streaming || autoMode || isUser || instant) setShown(unit.length)
+  }, [streaming, autoMode, isUser, instant, unit])
 
   // 换句（unit 变化）→ 重置打字机：
   //  - 流式续写同一句（新 unit 以旧 unit 为前缀）→ 保持进度继续打
@@ -58,7 +67,7 @@ export function DialogueBox({ name, isUser, unit, lineKey, autoMode, streaming, 
       // 同一句流式续写：保持已显示部分，继续打到新长度。
       return
     }
-    setShown(instant ? unit.length : 0)
+    setShown(instant || streaming || autoMode || isUser ? unit.length : 0)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [unit])
 
@@ -90,12 +99,16 @@ export function DialogueBox({ name, isUser, unit, lineKey, autoMode, streaming, 
   const partialText = unit.slice(0, effectiveShown)
   const typing = !finished && !streaming
 
+  useEffect(() => {
+    onVisibleText?.(partialText, finished)
+  }, [partialText, finished, onVisibleText])
+
   // 点击推进，但交互元素（复制按钮/链接/输入框等）不触发翻页（bug 修复）。
   const handleClick = (event: React.MouseEvent) => {
     const target = event.target as HTMLElement | null
     if (target !== null && typeof target.closest === 'function') {
       const interactive = target.closest('button, a, input, textarea, select, [role="button"], [contenteditable="true"]')
-      if (interactive !== null) return
+      if (interactive !== null && interactive !== event.currentTarget) return
     }
     onNext()
   }
@@ -106,7 +119,7 @@ export function DialogueBox({ name, isUser, unit, lineKey, autoMode, streaming, 
       <div className={styles.dialogueBox} onClick={handleClick} role="button" tabIndex={0} aria-label="点击继续" data-gg-scroll="">
         {hasText ? (
           <div className={typing ? styles.dialogueTyping : styles.dialogueBody}>
-            <MarkdownText text={partialText} streaming={typing || streaming} />
+            <MarkdownText text={partialText} streaming={typing || streaming} labels={labels} />
           </div>
         ) : (
           <span className={styles.dialoguePlaceholder}>&nbsp;</span>

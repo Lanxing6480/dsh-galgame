@@ -190,7 +190,13 @@ function mount(initial) {
   const useSessionStatus = (selector) => selector(new Map([
     [state.sessionId, { running: state.running, pendingInteraction: state.pending }],
   ]))
+  let boundSessionId
+  let injected
   const render = () => act(() => {
+    if (boundSessionId !== state.sessionId) {
+      boundSessionId = state.sessionId
+      injected = view.options.inject(state.sessionId)
+    }
     root.render(h(view.Component, {
       sessionId: state.sessionId,
       useChat,
@@ -198,7 +204,7 @@ function mount(initial) {
       useSessionStatus,
       sendTurn: state.sendTurn ?? (async () => true),
       sendSteer: state.sendSteer ?? (async () => true),
-      setGalgameMode: () => {},
+      activateGalgameMode: injected.activateGalgameMode,
       t,
     }))
   })

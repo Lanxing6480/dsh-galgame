@@ -12,8 +12,8 @@
  *    新版的输入草稿住在 shell 的 Lexical 编辑器里，而 GalGame 模式会接管
  *    `conversation.composer` 链（默认输入卡整体不挂载），此时 `inputActions`
  *    拿不到可用的草稿，故不再依赖草稿机，直发 prompt。
- *  - composer 接管仍是「恒命中、渲染空」的 chain 条目：默认输入卡、官方
- *    提问卡与官方审批卡全部让位给 GalGame 自己的浮层。
+ *  - composer 只接管当前 GalGame 挂载所属的会话；其他会话和插件继续
+ *    使用原输入卡。每次挂载独立持有 disposer，卸载时释放。
  *
  * @module @lanxing/dsh-galgame/client
  */
@@ -143,36 +143,22 @@ function apply(ctx: any) {
   )
   const t = ctx.locale.bind(NS)
 
-  // GalGame 模式激活时，在 conversation.composer 链上占一个更高优先级的空位，
-  // **恒接管并渲染空**：默认输入卡 / 官方提问卡 / 官方审批卡全部屏蔽——
-  // GalGame 有自己独立的输入条与浮层选项框，composer 区域不需要任何内容；
-  // 切回聊天视图（卸载）时注销抢占，默认输入栏恢复。
-  // （皮肤兼容通用方案：默认皮肤与皮肤 mod 均生效，避免双输入条/双提问框。）
-  let composerBlocker: (() => void) | null = null
-  const setGalgameMode = (active: boolean) => {
-    if (active && composerBlocker === null) {
-      try {
-        composerBlocker = ctx.slots.register(
-          {
-            name: 'conversation.composer',
-            priority: -100,
-            // 恒接管：GalGame 模式下 composer 恒为空
-            select: () => ({}),
-          },
-          // 空组件：接管后不渲染任何东西
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          function EmptyComposer() {
-            return null
-          } as any,
-        )
-      } catch {
-        composerBlocker = null
-      }
-    } else if (!active && composerBlocker !== null) {
-      composerBlocker()
-      composerBlocker = null
-    }
-  }
+  // conversation.composer 是 root 作用域的全局 chain。侧栏、分屏等插件
+  // 可同时展示多个会话，因此不能用 select: () => ({}) 全局抢占。
+  // 每个挂载独立注册，只匹配所属 session；slots.inject 同时处理上游重载
+  // 导致的 slot 撤销/重声明，以及插件卸载。空组件让位给 GalGame 自有输入。
+  const activateGalgameMode = (sessionId: string): (() => void) =>
+    ctx.slots.inject('conversation.composer', () =>
+      ctx.slots.register(
+        {
+          name: 'conversation.composer',
+          priority: -100,
+          select: (input: { sessionId?: string }) =>
+            input.sessionId === sessionId ? {} : null,
+        },
+        function EmptyComposer() { return null },
+      ),
+    )
 
   ctx.slots.inject(
     'conversation.view',
@@ -189,12 +175,12 @@ function apply(ctx: any) {
             sendTurn: (text: string) => promptSession(ctx, sessionId, text, 'queue'),
             // 任务执行中用户输入默认 steer 而非排队（经 session.prompt 直达 agent 循环）。
             sendSteer: (text: string) => promptSession(ctx, sessionId, text, 'steer'),
-            // GalGame 模式激活开关：挂载时屏蔽默认 composer，卸载时恢复。
-            setGalgameMode,
+            // 每次挂载取得独立释放句柄，避免多会话/多挂载互相覆盖。
+            activateGalgameMode: () => activateGalgameMode(sessionId),
           }),
         },
         // 组件 props 为宽松接口；运行时契约与官方 view entry 一致
-        // （useChat / useSession / useSessionStatus / sessionId / t / sendTurn / sendSteer / setGalgameMode）。
+        // （useChat / useSession / useSessionStatus / sessionId / t / sendTurn / sendSteer / activateGalgameMode）。
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         GalgameView as any,
       ),

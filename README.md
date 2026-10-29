@@ -1,12 +1,15 @@
 # dsh-galgame · GalGame 模式界面插件
 
-> 版本 1.2.0 · 适配 **DSH 0.2.0-rc.2**（Web 客户端 slot / session 契约）
+> 版本 1.2.1 · 适配 **DSH 0.2.0-rc.2 / 0.2.1-rc.3**（Web 客户端 slot / session 契约）
 
 ## 简介
 
 在 DSH Web GUI 的聊天主界面新增一个与「聊天」「轨迹」并列的界面栏——「galgame 模式」。该模式下，DeepSeek 娘（鲸鱼娘）以 GalGame 女主角的形式与你对话：立绘 + 差分接口 + 思考气泡 + 打字机对话框 + 分块阅读 + 提问/审批选项 + 历史回顾 + 调试模式。**纯视觉层**：不写会话、不干预 agent 循环，随时可切回常规聊天。
 
-## 兼容性（v1.2.0 适配 DSH 0.2.0-rc.2）
+## 兼容性
+
+v1.2.1 修复多会话界面中的输入区接管与释放，并避免安装插件时自动补装宿主依赖。
+DSH 0.2.1-rc.3 已完成隔离 Web 运行验证；具体变更、升级方式与验证边界见 [v1.2.1 发布说明](docs/releases/1.2.1.md)。
 
 ### 自动表情差分（v1.2.0 新增）
 
@@ -41,7 +44,14 @@ DSH 0.2.0 换掉了会话数据面与等待交互的发布方式，旧版（≤1
 > 而 0.2.0 的输入草稿住在 shell 的 Lexical 编辑器里——卡片不挂载时 `inputActions` 没有草稿可提交，
 > 所以输入条改为直接调 session 面的 `prompt`（`running` → steer 插话，空闲 → queue 新回合）。
 
-## 能力清单（v1.2.0）
+## 能力清单（v1.2.1）
+
+> v1.2.1 兼容性修复：默认输入区接管按 `sessionId` 隔离，
+> 多次挂载独立释放，并跟随上游插槽重声明恢复。已用 DSH 0.2.1-rc.3 的官方插槽实现回归。
+> 用户反馈的「普通聊天正文消失」尚未在本地复现，不能据此宣称已解决；
+> 宿主提供的 Cordis、React 和 DSH 前端包标为 optional peers，避免安装插件时自动补装旧宿主；
+> 前端 peer 范围明确包含已验证的 0.2.1-rc.3。optional 仅影响包管理器，运行时仍由 DSH 提供这些模块。
+> 全部插件的隔离运行、浏览器观察及未复现的边界见 [最新排查记录](docs/compatibility-2026-10-30.md)。
 
 | 能力 | 说明 |
 |---|---|
@@ -93,8 +103,8 @@ useSessionStatus            ← 提问/审批等待（pendingInteraction）
 ## 使用方式
 
 1. 构建：`pnpm install && pnpm build`（在 `plugins/dsh-galgame/` 目录）。
-2. 测试：`pnpm test`（零依赖冒烟）；`pnpm test:dom`（jsdom 交互，需 jsdom 可解析）。
-3. 安装（本地 link）：`dsh plugin --profile web add link:H:/Projects/DEEPSE~1/plugins/dsh-galgame`；或从 npm：`dsh plugin --profile web add @lanxing/dsh-galgame`。
+2. 测试：`pnpm test`（冒烟）；`pnpm test:dom`（jsdom 交互，需 jsdom 可解析）；`pnpm test:compat`（官方插槽账本上的多会话/插件共存回归）。
+3. 安装：`dsh plugin --profile web add @lanxing/dsh-galgame@1.2.1`；本地开发可用 `link:<插件目录的绝对路径>` 替换包名。使用 desktop 等其他 profile 时，替换 `--profile` 的值。
 4. **重启** DSH Web（`dsh web`）后刷新浏览器——bundle 元数据在启动时扫描并缓存，改完 `package.json` 必须重启。
 5. 用户操作入口：聊天主界面顶部标签栏 →「galgame 模式」。
 
@@ -120,7 +130,8 @@ assets/characters/deepseek/
 |---|---|---|---|
 | 1.0.0 | galgame | 稳定版：全功能验收通过（立绘居中修复/思考气泡流式/选项框位置固化/多选传递/用户输入显示/调试模式） | 已发布 |
 | 1.1.0 | galgame | 主题化 token、预览截图、i18n 名字牌修正 | 已发布 |
-| 1.2.0 | galgame | **适配 DSH 0.2.0-rc.2 + 自动表情差分**：peer 范围升级解除安装门禁、台词改读 `useChat().legacy`、等待交互改读 `useSessionStatus().pendingInteraction`（`answer`/`dismiss`）、发送改走 `session.prompt` 直发、平台模块表同步（`dsh-client-store` / `ui-dockkit`）、8 种差分与纯本地规则引擎、修复「历史」白屏、新增冒烟与 jsdom 交互测试 | 当前 |
+| 1.2.0 | galgame | **适配 DSH 0.2.0-rc.2 + 自动表情差分**：peer 范围升级解除安装门禁、台词改读 `useChat().legacy`、等待交互改读 `useSessionStatus().pendingInteraction`（`answer`/`dismiss`）、发送改走 `session.prompt` 直发、平台模块表同步（`dsh-client-store` / `ui-dockkit`）、8 种差分与纯本地规则引擎、修复「历史」白屏、新增冒烟与 jsdom 交互测试 | 已发布 |
+| 1.2.1 | galgame | **多会话与安装兼容性补丁**：输入区接管按会话隔离、多次挂载独立释放、上游插槽重声明后恢复；宿主依赖改为 optional peers，显式包含 DSH 0.2.1-rc.3；新增共存回归与隔离浏览器排查记录 | 当前 |
 
 - Client 入口：`src/client/index.ts`（locale + conversation.view 注册 + composer 接管 + prompt 直发）
 - Host 入口：`src/index.ts`（`/api/dsh-galgame/assets/*` 静态路由）
@@ -132,7 +143,7 @@ assets/characters/deepseek/
 - 立绘与差分均为透明底 WebP；原图（白底 JPG）与表情候选稿仅留档于 `raw/`，不入库。
 - 纯前端渲染 + `wait.answer()` / `wait.dismiss()`，不发模型请求、不阻塞 agent 循环。
 - 选项框/审批框位置已固化为默认值，仅调试模式可拖拽调整。
-- 接管 `conversation.composer` 期间官方提问卡/审批卡不渲染；GalGame 的浮层是它们在模式内的唯一入口。
+- 接管 `conversation.composer` 期间仅本会话的官方提问卡/审批卡不渲染；GalGame 的浮层是它们在模式内的唯一入口，其他会话不受影响。
   若 pending 交互是未知形态（未来新增领域），GalGame 不渲染任何卡片——此时切回「聊天」即可用官方界面处理。
 
 ## 素材来源与许可
@@ -161,3 +172,4 @@ assets/characters/deepseek/
 | 2026-08-15 | 1.1.0 | 主题化 token + 可读性/翻页修正、README 预览截图、名字牌「你」→「我」i18n 修正、立绘素材署名 |
 | 2026-09-24 | 1.2.0 | 适配 DSH 0.2.0-rc.2：peer 门禁解除、`useChat`/`useSessionStatus` 数据面重接、`PendingQuestion`/`PendingApproval` 交互重写、`session.prompt` 直发、平台模块表更新、新增 `test/smoke.test.mjs` 与 `test/dom.test.mjs` |
 | 2026-10-19 | 1.2.0 | 自动表情差分（8 种，纯本地规则，零额外模型请求）；差分图转 WebP（约 11 MB → 2 MB）；修复「历史」面板因 `MarkdownText` 缺 `labels` 渲染代码块时白屏，浮层新增 `LayerBoundary` 兜底；新增表情时序与独立试演页测试 |
+| 2026-10-30 | 1.2.1 | 修复 composer 跨会话泄漏、多挂载释放与插槽重声明；宿主 peers 改为 optional，补充 0.2.1-rc.3 范围。已做完整插件组合的隔离浏览器验证；正文消失原反馈仍未复现，详见最新排查记录 |

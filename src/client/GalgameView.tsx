@@ -58,8 +58,8 @@ export interface GalgameViewProps {
   sendTurn: (text: string) => Promise<boolean>
   /** 引导/插话发送（插件 inject 提供：running 时 steer）。 */
   sendSteer: (text: string) => Promise<boolean>
-  /** GalGame 模式激活开关（插件 inject 提供）：挂载时屏蔽默认 composer，卸载恢复。 */
-  setGalgameMode: (active: boolean) => void
+  /** 只屏蔽本会话的默认 composer，返回本次挂载的释放函数。 */
+  activateGalgameMode: () => (() => void)
   /** locale 翻译（注册时声明了 NS 命名空间）。 */
   t: (key: string, params?: Record<string, unknown>) => string
 }
@@ -123,7 +123,7 @@ function GalgameSession({
   useSessionStatus,
   sendTurn,
   sendSteer,
-  setGalgameMode,
+  activateGalgameMode,
   t,
 }: GalgameViewProps) {
   // props 缺失时用模块级常量替身：hook 身份在渲染之间稳定，不违反 hooks 规则。
@@ -142,10 +142,7 @@ function GalgameSession({
   const approvalWait = asApprovalWait(pending)
 
   // GalGame 模式激活：屏蔽默认 composer（含官方提问/审批卡）；卸载时恢复。
-  useEffect(() => {
-    setGalgameMode(true)
-    return () => setGalgameMode(false)
-  }, [setGalgameMode])
+  useEffect(() => activateGalgameMode(), [activateGalgameMode])
 
   // 配置（localStorage 持久化）。
   const [settings, setSettings] = useState<GalgameSettings>(() => loadSettings())

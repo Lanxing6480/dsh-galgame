@@ -1,7 +1,7 @@
 {
   "name": "@lanxing/dsh-galgame",
   "description": "GalGame mode for the dsh web GUI: a third conversation view tab (after 轨迹) that renders the real agent session as a visual-novel stage — whale-girl (DeepSeek) portrait with diff switching + draggable thinking bubble, Markdown dialogue box with typewriter + block paging, GalGame-style question/approval choices bound to the portrait, backlog drawer, and a debug mode. Pure presentation layer: never writes the session and never blocks the agent loop.",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "private": false,
   "repository": {
     "type": "git",
@@ -64,19 +64,31 @@
     "watch": "tsdown --watch",
     "test": "node test/smoke.test.mjs",
     "test:dom": "node test/dom.test.mjs",
+    "test:compat": "node --test test/compatibility.test.mjs",
     "prepublishOnly": "pnpm build"
   },
   "dependencies": {},
   "peerDependencies": {
     "@deepseek-ai/cordis": "^4.0.1",
-    "@deepseek-ai/dsh-client-locale": "^0.2.0-rc.2",
-    "@deepseek-ai/dsh-client-ui-chat": "^0.2.0-rc.2",
-    "@deepseek-ai/dsh-client-ui-conversation": "^0.2.0-rc.2",
-    "@deepseek-ai/dsh-client-ui-primitives": "^0.2.0-rc.2",
-    "@deepseek-ai/dsh-client-ui-session": "^0.2.0-rc.2",
-    "@deepseek-ai/dsh-client-ui-slots": "^0.2.0-rc.2",
+    "@deepseek-ai/dsh-client-locale": "^0.2.0-rc.2 || ^0.2.1-rc.3",
+    "@deepseek-ai/dsh-client-ui-chat": "^0.2.0-rc.2 || ^0.2.1-rc.3",
+    "@deepseek-ai/dsh-client-ui-conversation": "^0.2.0-rc.2 || ^0.2.1-rc.3",
+    "@deepseek-ai/dsh-client-ui-primitives": "^0.2.0-rc.2 || ^0.2.1-rc.3",
+    "@deepseek-ai/dsh-client-ui-session": "^0.2.0-rc.2 || ^0.2.1-rc.3",
+    "@deepseek-ai/dsh-client-ui-slots": "^0.2.0-rc.2 || ^0.2.1-rc.3",
     "react": "^18.2.0",
     "react-dom": "^18.2.0"
+  },
+  "peerDependenciesMeta": {
+    "@deepseek-ai/cordis": { "optional": true },
+    "@deepseek-ai/dsh-client-locale": { "optional": true },
+    "@deepseek-ai/dsh-client-ui-chat": { "optional": true },
+    "@deepseek-ai/dsh-client-ui-conversation": { "optional": true },
+    "@deepseek-ai/dsh-client-ui-primitives": { "optional": true },
+    "@deepseek-ai/dsh-client-ui-session": { "optional": true },
+    "@deepseek-ai/dsh-client-ui-slots": { "optional": true },
+    "react": { "optional": true },
+    "react-dom": { "optional": true }
   },
   "devDependencies": {
     "@deepseek-ai/cordis": "^4.0.4",

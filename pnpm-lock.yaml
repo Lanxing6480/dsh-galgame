@@ -9,19 +9,19 @@ importers:
   .:
     dependencies:
       '@deepseek-ai/dsh-client-locale':
-        specifier: ^0.2.0-rc.2
+        specifier: ^0.2.0-rc.2 || ^0.2.1-rc.3
         version: 0.2.0-rc.2(@deepseek-ai/cordis@4.0.5)
       '@deepseek-ai/dsh-client-ui-chat':
-        specifier: ^0.2.0-rc.2
+        specifier: ^0.2.0-rc.2 || ^0.2.1-rc.3
         version: 0.2.0-rc.2(@deepseek-ai/cordis@4.0.5)
       '@deepseek-ai/dsh-client-ui-conversation':
-        specifier: ^0.2.0-rc.2
+        specifier: ^0.2.0-rc.2 || ^0.2.1-rc.3
         version: 0.2.0-rc.2(@deepseek-ai/cordis@4.0.5)
       '@deepseek-ai/dsh-client-ui-primitives':
-        specifier: ^0.2.0-rc.2
+        specifier: ^0.2.0-rc.2 || ^0.2.1-rc.3
         version: 0.2.0-rc.2(@deepseek-ai/cordis@4.0.5)
       '@deepseek-ai/dsh-client-ui-session':
-        specifier: ^0.2.0-rc.2
+        specifier: ^0.2.0-rc.2 || ^0.2.1-rc.3
         version: 0.2.0-rc.2(@deepseek-ai/cordis@4.0.5)
     devDependencies:
       '@deepseek-ai/cordis':

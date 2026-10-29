@@ -85,7 +85,7 @@ const ctx = {
       return () => { record.disposed = true }
     },
     inject(name, callback) {
-      assert.equal(name, 'conversation.view')
+      assert.ok(['conversation.view', 'conversation.composer'].includes(name))
       return callback()
     },
   },
@@ -141,14 +141,16 @@ check('sendSteer → session.prompt(steer)', async () => {
   assert.equal(prompted.at(-1).mode, 'steer')
 })
 
-check('setGalgameMode 接管 / 释放 conversation.composer 链', () => {
-  injected.setGalgameMode(true)
+check('activateGalgameMode 仅接管本会话 / 释放 conversation.composer 链', () => {
+  const release = injected.activateGalgameMode()
   const blocker = registrations.find((item) => item.options.name === 'conversation.composer')
   assert.ok(blocker, '未注册 composer 接管条目')
   assert.equal(blocker.options.priority, -100)
-  assert.deepEqual(blocker.options.select({}), {})
+  assert.deepEqual(blocker.options.select({ sessionId: 'session-1' }), {})
+  assert.equal(blocker.options.select({ sessionId: 'session-2' }), null)
+  assert.equal(blocker.options.select({}), null)
   assert.equal(blocker.Component({}), null)
-  injected.setGalgameMode(false)
+  release()
   assert.equal(blocker.disposed, true)
 })
 
@@ -179,7 +181,7 @@ function render({ nodeList = [], partial = null, running = false, openState = 'o
     ])),
     sendTurn: async () => true,
     sendSteer: async () => true,
-    setGalgameMode: () => {},
+    activateGalgameMode: () => () => {},
     t,
   }))
 }
